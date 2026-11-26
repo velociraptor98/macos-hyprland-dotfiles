@@ -127,6 +127,41 @@ gaps.outer.top        = [{ monitor.'built-in' = 20 }, 52]
     if.app-id = 'com.apple.SystemProfiler'
     run = 'layout floating'
 
+[[on-window-detected]]
+    if.app-id = 'com.apple.finder'
+    run = 'layout floating'
+
+# ---------------------------------------------------------------------------
+# Pin apps to workspaces (hyprland `windowrule = workspace N, ...`).
+# Applies to every new window of the app, and to existing windows when AeroSpace
+# starts, so the layout comes back after a restart. alt-shift-N still moves a window.
+# ---------------------------------------------------------------------------
+# 1 — browsers
+[[on-window-detected]]
+    if.app-id = 'com.apple.Safari'
+    run = 'move-node-to-workspace 1'
+
+[[on-window-detected]]
+    if.app-id = 'net.imput.helium'
+    run = 'move-node-to-workspace 1'
+
+# 2 — terminals and coding agents (the claude / opencode CLIs run inside the terminal)
+[[on-window-detected]]
+    if.app-id = 'com.apple.Terminal'
+    run = 'move-node-to-workspace 2'
+
+[[on-window-detected]]
+    if.app-id = 'com.superlogical.rex'
+    run = 'move-node-to-workspace 2'
+
+[[on-window-detected]]
+    if.app-id = 'com.anthropic.claudefordesktop'
+    run = 'move-node-to-workspace 2'
+
+[[on-window-detected]]
+    if.app-id = 'ai.opencode.desktop'
+    run = 'move-node-to-workspace 2'
+
 # ---------------------------------------------------------------------------
 # Main bindings
 # ---------------------------------------------------------------------------

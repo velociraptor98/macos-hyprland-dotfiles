@@ -81,6 +81,9 @@ Then start AeroSpace (it reloads its config on save; SketchyBar hot-reloads too)
 - **Launcher:** `alt-r` and the power menu open macOS *Apps* (macOS 26+) — change `open -a Apps` if you use Raycast/Alfred.
 - **Homebrew prefix:** works on Apple Silicon (`/opt/homebrew`) and Intel (`/usr/local`) — no absolute paths to edit.
 - **Monitors:** workspaces 1–5 go to the external display, 6–10 to the built-in one (`[workspace-to-monitor-force-assignment]`).
+- **App → workspace:** browsers (Safari, Helium) open on 1; terminals and coding agents (Terminal, Rex, Claude, OpenCode)
+  on 2; Finder and small utilities float. Edit the `[[on-window-detected]]` rules in `aerospace/aerospace.toml`
+  (find an app's ID with `aerospace list-apps`).
 - **Colours:** `sketchybar/colors.sh` and `borders/bordersrc`.
 - **App icons:** `sketchybar/plugins/icon_map.sh` (unknown apps get a generic icon).
 
