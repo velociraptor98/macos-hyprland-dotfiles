@@ -9,6 +9,7 @@ export ICON_CLOCK=""   # U+F017
 export ICON_CALENDAR=""   # U+F073
 export ICON_CPU=""   # U+F2DB
 export ICON_MEMORY="󰍛"   # U+F035B
+export ICON_TEMP=""   # U+F2C9
 export ICON_WIFI="󰖩"   # U+F05A9
 export ICON_WIFI_OFF="󰖪"   # U+F05AA
 export ICON_VOL_HIGH="󰕾"   # U+F057E

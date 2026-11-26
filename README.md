@@ -16,7 +16,7 @@ bar) and **JankyBorders** (window borders), themed **Tokyo Night**.
 - Workspaces show only occupied + on-screen ones, each with app icons, drawn on their own monitor's bar
 - Focused window title (left of the notch on a MacBook screen), layout indicator, AeroSpace mode pill with key hints
 - Click popups: power menu (logo), calendar (date/time), battery details, volume slider (right click = mute)
-- CPU, memory, Wi-Fi, volume, battery, clock
+- CPU (with temperature), memory, Wi-Fi, volume, battery, clock
 - Event-driven: one controller script redraws from a single AeroSpace snapshot, bursts are coalesced,
   identical redraws are skipped, no window titles are written to disk
 
@@ -30,6 +30,7 @@ bar) and **JankyBorders** (window borders), themed **Tokyo Night**.
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com) | bar icons (any Nerd Font v3 works) | yes | 3.x |
 | [sketchybar-app-font](https://github.com/kvndrsslr/sketchybar-app-font) | per-app icons in workspaces and the title | optional — without it, workspaces show numbers only | — |
 | [JankyBorders](https://github.com/FelixKratz/JankyBorders) | Hyprland-style window borders | optional | 1.9.0 |
+| Xcode Command Line Tools (`xcode-select --install`) | CPU temperature: the bar compiles a tiny sensor reader on first run | optional — without it the temperature is hidden | Apple M5 |
 
 Install them:
 
@@ -48,6 +49,11 @@ brew install --cask font-sketchybar-app-font      # optional
 brew install FelixKratz/formulae/borders          # optional
 ```
 
+**SketchyBar:** follow the official [SketchyBar setup guide](https://felixkratz.github.io/SketchyBar/setup)
+from the [main repo](https://github.com/FelixKratz/SketchyBar) for installing and running SketchyBar and for
+any macOS-version-specific steps. **Skip its step that copies the example `sketchybarrc` and plugins into
+`~/.config/sketchybar`** — this repo provides that folder (see [Install](#install)).
+
 Recommended: set the macOS menu bar to auto-hide (System Settings → Control Center →
 Automatically hide and show the menu bar), so SketchyBar takes its place like Waybar.
 
@@ -55,9 +61,11 @@ Automatically hide and show the menu bar), so SketchyBar takes its place like Wa
 
 ```sh
 git clone <this repo> ~/dotfiles/macos-hyprland && cd ~/dotfiles/macos-hyprland
+# Move any existing ~/.config/sketchybar out of the way first, or the link lands inside it.
+mkdir -p ~/.config/borders
 ln -sf "$PWD/aerospace/aerospace.toml" ~/.aerospace.toml
 ln -sfn "$PWD/sketchybar" ~/.config/sketchybar
-mkdir -p ~/.config/borders && ln -sf "$PWD/borders/bordersrc" ~/.config/borders/bordersrc
+ln -sf "$PWD/borders/bordersrc" ~/.config/borders/bordersrc
 
 brew services start sketchybar
 brew services start borders      # only if you installed JankyBorders

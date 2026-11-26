@@ -3,3 +3,6 @@
 *.bak-*
 *.swp
 *~
+
+# compiled by sketchybarrc on first run
+sketchybar/helpers/cpu_temp

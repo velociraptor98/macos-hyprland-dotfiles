@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 #  SketchyBar as Waybar — Hyprland-style bar for AeroSpace, Tokyo Night
 #
-#  [  ] [ 1 2 3 S ] [▥] [RESIZE]    [ app · window title ]    [ cpu mem ] [ wifi vol bat ] [ date time ]
+#  [  ] [ 1 2 3 S ] [▥] [RESIZE]    [ app · window title ]    [ cpu temp mem ] [ wifi vol bat ] [ date time ]
 #
 #  Floating "islands" on a transparent bar, aligned with AeroSpace's 20px outer gaps.
 #  Popups (click; close when the mouse leaves the bar): logo = power menu,
@@ -376,13 +376,31 @@ sketchybar --add slider volume.slider popup.volume 180 \
 
 spacer gap.system right 8
 
-##### Right: cpu / memory ######################################################
+##### Right: cpu / temperature / memory ########################################
+# CPU temperature comes from a tiny C helper (no sudo, no brew package). Build it
+# on first run or when its source changes; skip if the Xcode CLT aren't installed
+# (calling the /usr/bin/clang stub would pop up an install dialog). Without the
+# helper the temperature just stays hidden.
+TEMP_HELPER="$CONFIG_DIR/helpers/cpu_temp"
+if { [ ! -x "$TEMP_HELPER" ] || [ "$TEMP_HELPER.c" -nt "$TEMP_HELPER" ]; } && xcode-select -p >/dev/null 2>&1; then
+  clang -O2 -w -framework IOKit -framework CoreFoundation -o "$TEMP_HELPER" "$TEMP_HELPER.c" \
+    || echo "sketchybar: could not build $TEMP_HELPER" >&2
+fi
+
 sketchybar --add item memory right \
   --set memory \
     icon="$ICON_MEMORY" \
     label.padding_right=13 \
     update_freq=10 \
     script="$PLUGIN_DIR/memory.sh" \
+    click_script="open -a 'Activity Monitor'" \
+  \
+  --add item cpu_temp right \
+  --set cpu_temp \
+    drawing=off \
+    icon="$ICON_TEMP" \
+    update_freq=5 \
+    script="$PLUGIN_DIR/cpu_temp.sh" \
     click_script="open -a 'Activity Monitor'" \
   \
   --add item cpu right \
@@ -393,7 +411,7 @@ sketchybar --add item memory right \
     script="$PLUGIN_DIR/cpu.sh" \
     click_script="open -a 'Activity Monitor'" \
   \
-  --add bracket stats_island cpu memory \
+  --add bracket stats_island cpu cpu_temp memory \
   --set stats_island "${island[@]}"
 
 ##### Go #######################################################################
