@@ -12,7 +12,14 @@ config-version = 2
 
 # Hyprland-style active/inactive borders come from JankyBorders (AeroSpace has none of its own).
 # It runs as a brew service and is configured in ~/.config/borders/bordersrc (Tokyo Night).
-after-startup-command = []
+#
+# At login SketchyBar (brew service) and AeroSpace start independently. If the bar wins,
+# its first AeroSpace query fails and the workspace pills stay empty until the first event.
+# So once AeroSpace is up: wait (max 30s) until the bar's controller item exists, then
+# ask it to redraw. Runs only at startup, not on config reload.
+after-startup-command = [
+    '''exec-and-forget for i in $(seq 1 30); do sketchybar --query aerospace >/dev/null 2>&1 && break; sleep 1; done; sketchybar --trigger aerospace_refresh''',
+]
 
 # SketchyBar (Waybar-style bar) integration — see ~/.config/sketchybar/sketchybarrc
 # (No variables passed: the bar queries AeroSpace itself, so nothing is shell-expanded here.)
@@ -36,8 +43,11 @@ default-root-container-orientation = 'auto'
 # Hyprland has no "hidden app" concept; keep every window on the tiling grid.
 automatically-unhide-macos-hidden-apps = true
 
-# Hyprland creates/destroys workspaces dynamically.
-persistent-workspaces = []
+# Hyprland creates/destroys workspaces dynamically — except one "home" workspace per
+# monitor. At startup AeroSpace needs a workspace for each screen and skips every
+# force-assigned one (1-10) that doesn't exist yet, inventing "11" instead (no bar pill,
+# pinning looks broken after a reboot). Keeping 1 and 6 alive gives each screen its home.
+persistent-workspaces = ['1', '6']
 
 # Drives SketchyBar's submap/mode pill.
 # Mode pill + key hints; the refresh also catches layout changes made in service mode.

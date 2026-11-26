@@ -20,15 +20,36 @@ bar) and **JankyBorders** (window borders), themed **Tokyo Night**.
 - Event-driven: one controller script redraws from a single AeroSpace snapshot, bursts are coalesced,
   identical redraws are skipped, no window titles are written to disk
 
-## Requirements
+## Prerequisites
+
+| Tool | Needed for | Required? | Tested with |
+|---|---|---|---|
+| [Homebrew](https://brew.sh) | installing everything below | yes | — |
+| [AeroSpace](https://github.com/nikitabobko/AeroSpace) | tiling window manager (the "Hyprland" part) | yes | 0.21.3-Beta |
+| [SketchyBar](https://github.com/FelixKratz/SketchyBar) | the status bar (the "Waybar" part) | yes | 2.24.1 |
+| [JetBrainsMono Nerd Font](https://www.nerdfonts.com) | bar icons (any Nerd Font v3 works) | yes | 3.x |
+| [sketchybar-app-font](https://github.com/kvndrsslr/sketchybar-app-font) | per-app icons in workspaces and the title | optional — without it, workspaces show numbers only | — |
+| [JankyBorders](https://github.com/FelixKratz/JankyBorders) | Hyprland-style window borders | optional | 1.9.0 |
+
+Install them:
 
 ```sh
+# Window manager
 brew install --cask nikitabobko/tap/aerospace
-brew install FelixKratz/formulae/sketchybar FelixKratz/formulae/borders
-brew install --cask font-jetbrains-mono-nerd-font font-sketchybar-app-font
+
+# Status bar
+brew install FelixKratz/formulae/sketchybar
+
+# Fonts
+brew install --cask font-jetbrains-mono-nerd-font
+brew install --cask font-sketchybar-app-font      # optional
+
+# Window borders
+brew install FelixKratz/formulae/borders          # optional
 ```
 
-Recommended: macOS menu bar set to auto-hide (System Settings → Control Center → Automatically hide and show the menu bar).
+Recommended: set the macOS menu bar to auto-hide (System Settings → Control Center →
+Automatically hide and show the menu bar), so SketchyBar takes its place like Waybar.
 
 ## Install
 
@@ -39,7 +60,7 @@ ln -sfn "$PWD/sketchybar" ~/.config/sketchybar
 mkdir -p ~/.config/borders && ln -sf "$PWD/borders/bordersrc" ~/.config/borders/bordersrc
 
 brew services start sketchybar
-brew services start borders
+brew services start borders      # only if you installed JankyBorders
 ```
 
 Then start AeroSpace (it reloads its config on save; SketchyBar hot-reloads too).
