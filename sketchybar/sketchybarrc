@@ -268,7 +268,7 @@ sketchybar --add item title_poll left \
   --set title_poll \
     drawing=off \
     updates=on \
-    update_freq=2 \
+    update_freq=3 \
     script="$PLUGIN_DIR/title_poll.sh"
 
 ##### Right: clock (rightmost) #################################################
@@ -407,7 +407,7 @@ sketchybar --add item memory right \
   --set cpu \
     icon="$ICON_CPU" \
     icon.padding_left=13 \
-    update_freq=3 \
+    update_freq=5 \
     script="$PLUGIN_DIR/cpu.sh" \
     click_script="open -a 'Activity Monitor'" \
   \
