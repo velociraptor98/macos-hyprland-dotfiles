@@ -4,7 +4,7 @@
 #
 #  [  ] [ 1 2 3 S ] [▥] [RESIZE]    [ app · window title ]    [ cpu temp mem ] [ wifi vol bat ] [ date time ]
 #
-#  Floating "islands" on a transparent bar, aligned with AeroSpace's 20px outer gaps.
+#  Floating "islands" on a transparent bar, 10px side margin = AeroSpace's 10px outer gaps, so bar and windows line up.
 #  Popups (click; close when the mouse leaves the bar): logo = power menu,
 #  date/time = calendar, battery = details, volume = slider (right click = mute).
 #  Mode pill shows key hints. ▥ = layout of the focused container.
@@ -69,7 +69,7 @@ sketchybar --bar \
   position=top \
   height=32 \
   y_offset=10 \
-  margin=20 \
+  margin=10 \
   padding_left=0 \
   padding_right=0 \
   color=$TRANSPARENT \
