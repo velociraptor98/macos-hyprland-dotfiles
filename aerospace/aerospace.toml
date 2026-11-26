@@ -22,10 +22,9 @@ after-startup-command = [
 ]
 
 # SketchyBar (Waybar-style bar) integration — see ~/.config/sketchybar/sketchybarrc
-# (No variables passed: the bar queries AeroSpace itself, so no shell is needed — sketchybar
-# is run directly, which saves a bash process per switch. Absolute path: no $PATH lookup here;
-# on an Intel Mac it's /usr/local/bin/sketchybar.)
-exec-on-workspace-change = ['/opt/homebrew/bin/sketchybar', '--trigger', 'aerospace_workspace_change']
+# (No variables passed: the bar queries AeroSpace itself, so no shell is needed. /usr/bin/env
+# finds sketchybar on $PATH — /opt/homebrew or /usr/local — without starting a bash per switch.)
+exec-on-workspace-change = ['/usr/bin/env', 'sketchybar', '--trigger', 'aerospace_workspace_change']
 
 start-at-login = true
 

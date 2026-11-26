@@ -5,6 +5,7 @@ source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, e
 
 source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/plugins/alert.sh"
 
 if [ "$SENDER" = "mouse.exited.global" ]; then
   sketchybar --set "$NAME" popup.drawing=off
@@ -16,6 +17,7 @@ pct="$(printf '%s' "$batt" | grep -Eo '[0-9]+%' | head -1 | tr -d '%')"
 
 if [ -z "$pct" ]; then
   sketchybar --set "$NAME" drawing=off
+  island_alert battery off
   exit 0
 fi
 
@@ -35,6 +37,8 @@ if printf '%s' "$batt" | grep -q 'AC Power'; then
 fi
 
 sketchybar --set "$NAME" drawing=on icon="$icon" icon.color=$color label="${pct}%"
+# Below 20% and not on the charger: red island edge.
+if [ "$on_ac" = false ] && [ "$pct" -lt 20 ]; then island_alert battery on; else island_alert battery off; fi
 
 [ "$SENDER" = "mouse.clicked" ] || exit 0
 

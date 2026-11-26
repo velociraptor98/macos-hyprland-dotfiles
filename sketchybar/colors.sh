@@ -28,6 +28,7 @@ export TRANSPARENT=0x00000000
 export EDGE=0x33c0caf5        # FG at 20%
 export EDGE_HOVER=0x66c0caf5  # FG at 40%
 export SHADOW=0x59000000      # black at 35%
+export ALERT_EDGE=0xccf7768e  # RED at 80%: status island edge while something is critical
 
 # Semantic
 export ACCENT=$BLUE

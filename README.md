@@ -13,12 +13,19 @@ bar) and **JankyBorders** (window borders), themed **Tokyo Night**.
 
 ## Bar features
 
-- Workspaces show only occupied + on-screen ones, each with app icons, drawn on their own monitor's bar
+- Floating glass islands: translucent capsules with a hairline edge and a soft shadow; each lights up on hover
+- Workspaces show only occupied + on-screen ones, drawn on their own monitor's bar. The focused one is a wide
+  accent pill with app icons (the width change animates), the one on screen on the other monitor is outlined,
+  the rest are compact muted numbers
 - Focused window title (left of the notch on a MacBook screen), layout indicator, AeroSpace mode pill with key hints
-- Click popups: power menu (logo), calendar (date/time), battery details, volume slider (right click = mute)
-- CPU (with temperature), memory, Wi-Fi, volume, battery, clock
+- Click popups (frosted): power menu (logo; grouped into Apps / Session / Reload), calendar (date/time),
+  battery details, volume slider (right click = mute)
+- One status island: CPU with a live usage graph, temperature and memory │ Wi-Fi, volume and battery — plus a clock island
+- Coloured icons, quieter labels; warning colours on CPU, temperature, memory and battery as they climb. The status
+  island's edge turns red while something is critical (battery under 20% off the charger, CPU ≥ 85 °C, memory ≥ 85%)
 - Event-driven: one controller script redraws from a single AeroSpace snapshot, bursts are coalesced,
-  identical redraws are skipped, no window titles are written to disk
+  identical redraws are skipped, no window titles are written to disk. The only polling is cheap
+  (window title every 5s, CPU/temperature every 5s, the rest slower); nothing needs extra macOS permissions
 
 ## Prerequisites
 
@@ -82,20 +89,27 @@ Then start AeroSpace (it reloads its config on save; SketchyBar hot-reloads too)
 - **Homebrew prefix:** works on Apple Silicon (`/opt/homebrew`) and Intel (`/usr/local`) — no absolute paths to edit.
 - **Monitors:** workspaces 1–5 go to the external display, 6–10 to the built-in one (`[workspace-to-monitor-force-assignment]`).
 - **App → workspace:** browsers (Safari, Helium) open on 1; terminals and coding agents (Terminal, Rex, Claude, OpenCode)
-  on 2; Finder and small utilities float. Edit the `[[on-window-detected]]` rules in `aerospace/aerospace.toml`
+  on 2; Finder, small utilities and picture-in-picture video float. Edit the `[[on-window-detected]]` rules in `aerospace/aerospace.toml`
   (find an app's ID with `aerospace list-apps`).
-- **Colours:** `sketchybar/colors.sh` and `borders/bordersrc`.
+- **Colours:** `sketchybar/colors.sh` and `borders/bordersrc`. Island transparency is the alpha byte of `BG`
+  in `colors.sh` (`0xbf…` = 75%); edge, shadow and hover colours sit next to it.
 - **App icons:** `sketchybar/plugins/icon_map.sh` (unknown apps get a generic icon).
 
 ## Key bindings (main)
 
 | Keys | Action |
 |---|---|
+| `alt-q` / `alt-enter` `alt-e` `alt-r` | Terminal, file manager (Finder), launcher (Apps) |
 | `alt-1…0` / `alt-shift-1…0` | Workspace / move window there (follow) |
 | `alt-ctrl-1…0` | Move window silently |
-| `alt-h j k l` / `alt-shift-h j k l` | Focus / move (crosses monitors) |
+| `alt-[ ]` / `alt-shift-[ ]` | Previous / next workspace, or take the window there (wraps around) |
+| `alt-tab` | Back to the previous workspace |
+| `alt-h j k l` / `alt-shift-h j k l` | Focus / move (crosses monitors; arrow keys work too) |
+| `alt-ctrl-h j k l` `alt-- =` `alt-b` | Resize, smart shrink / grow, balance sizes |
 | `alt-, .` / `alt-shift-, .` | Focus / move window to previous / next monitor |
-| `alt-c` `alt-v` `alt-f` | Close, float, fullscreen |
+| `alt-c` `alt-v` `alt-f` / `alt-shift-f` | Close, float, fullscreen edge to edge / fullscreen inside the gaps |
 | `alt-t` `alt-w` `alt-/` | Split orientation, accordion, tiles orientation |
 | `alt-s` / `alt-shift-s` | Scratchpad toggle / send window to it |
-| `alt-shift-r` / `alt-shift-;` | Resize mode / service mode |
+| `alt-shift-r` / `alt-shift-;` | Resize mode / service mode (the bar shows their keys) |
+
+In resize mode: `h j k l` resize by 50, `shift-h j k l` by 200, `- =` smart, `b` balance and exit, `esc` exit.

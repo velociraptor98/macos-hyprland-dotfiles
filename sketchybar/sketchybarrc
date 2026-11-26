@@ -105,6 +105,25 @@ spacer() { # name position [width]
     --set "$1" width="${3:-8}" icon.drawing=off label.drawing=off background.drawing=off
 }
 
+divider() { # name position — thin vertical line between groups inside an island
+  sketchybar --add item "$1" "$2" \
+    --set "$1" width=1 padding_left=4 padding_right=4 \
+      icon.drawing=off label.drawing=off \
+      background.drawing=on background.color=$EDGE background.height=14 background.corner_radius=0
+}
+
+# Popup section heading: a divider line along the top of the row, small muted caps under it.
+# One item, not two: every popup item gets a full row (the parent's popup.height),
+# so a separate 1px rule item would still take a whole row.
+popup_heading() { # name parent label
+  sketchybar --add item "$1" "popup.$2" \
+    --set "$1" width=186 padding_left=12 padding_right=12 icon.drawing=off \
+      label="$3" label.font="$FONT:Bold:10.0" label.color=$COMMENT \
+      label.padding_left=0 label.y_offset=-3 \
+      background.drawing=on background.color=$EDGE background.height=1 \
+      background.corner_radius=0 background.y_offset=9
+}
+
 ##### Custom events from AeroSpace #############################################
 sketchybar --add event aerospace_workspace_change \
            --add event aerospace_focus_change \
@@ -115,6 +134,7 @@ sketchybar --add event aerospace_workspace_change \
 sketchybar --add item logo left \
   --set logo "${island[@]}" "${popup[@]}" \
     popup.align=left \
+    popup.height=24 \
     icon="$ICON_APPLE" \
     icon.font="$FONT:Bold:17.0" \
     icon.color=$ACCENT \
@@ -128,16 +148,19 @@ power_row() { # name icon color label command
   sketchybar --add item "power.$1" popup.logo \
     --set "power.$1" "${popup_row[@]}" \
       width=210 \
+      background.height=24 \
       icon="$2" icon.color="$3" label="$4" \
       script="$PLUGIN_DIR/popup_row.sh" \
       click_script="sketchybar --set logo popup.drawing=off; $5" \
     --subscribe "power.$1" mouse.entered mouse.exited
 }
 power_row apps   "$ICON_APPS"   $ACCENT  "Apps"              "open -a Apps"
+popup_heading power.head.session logo "SESSION"
 power_row lock   "$ICON_LOCK"   $YELLOW  "Lock screen"       "pmset displaysleepnow"
 power_row sleep  "$ICON_SLEEP"  $MAGENTA "Sleep"             "pmset sleepnow"
-power_row bar    "$ICON_RELOAD" $TEAL    "Reload SketchyBar" "sketchybar --reload"
-power_row wm     "$ICON_RELOAD" $TEAL    "Reload AeroSpace"  "aerospace reload-config"
+popup_heading power.head.reload logo "RELOAD"
+power_row bar    "$ICON_RELOAD" $TEAL    "SketchyBar"        "sketchybar --reload"
+power_row wm     "$ICON_RELOAD" $TEAL    "AeroSpace"         "aerospace reload-config"
 
 spacer gap.logo left 8
 
@@ -288,8 +311,9 @@ sketchybar --add item clock right \
     label.padding_right=13 \
     update_freq=5 \
     script="ISLAND=clock_island $PLUGIN_DIR/clock.sh" \
-  --subscribe clock mouse.clicked mouse.entered mouse.exited \
-  --add item date right \
+  --subscribe clock mouse.clicked mouse.entered mouse.exited
+divider divider.clock right
+sketchybar --add item date right \
   --set date "${popup[@]}" \
     popup.align=center \
     icon="$ICON_CALENDAR" \
@@ -298,7 +322,7 @@ sketchybar --add item clock right \
     update_freq=60 \
     script="ISLAND=clock_island $PLUGIN_DIR/clock.sh" \
   --subscribe date mouse.clicked mouse.exited.global mouse.entered mouse.exited \
-  --add bracket clock_island date clock \
+  --add bracket clock_island date divider.clock clock \
   --set clock_island "${island[@]}"
 
 # Calendar popup rows (filled by plugins/calendar.sh on click): title, weekdays, 6 weeks.
@@ -382,17 +406,7 @@ sketchybar --add slider volume.slider popup.volume 180 \
     click_script="sketchybar --set volume popup.drawing=off; open 'x-apple.systempreferences:com.apple.Sound-Settings.extension'" \
   --subscribe volume.settings mouse.entered mouse.exited
 
-sketchybar --add item divider.status right \
-  --set divider.status \
-    width=1 \
-    padding_left=4 \
-    padding_right=4 \
-    icon.drawing=off \
-    label.drawing=off \
-    background.drawing=on \
-    background.color=$EDGE \
-    background.height=14 \
-    background.corner_radius=0
+divider divider.status right
 
 # cpu / temperature / memory
 # CPU temperature comes from a tiny C helper (no sudo, no brew package). Build it
