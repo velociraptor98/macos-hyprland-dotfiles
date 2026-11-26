@@ -3,6 +3,8 @@
 #   left click  = toggle tiles horizontal <-> vertical   (alt-/)
 #   right click = toggle accordion <-> tiles             (alt-w)
 
+source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+
 [ "$SENDER" = "mouse.clicked" ] || exit 0
 
 if [ "$BUTTON" = "right" ]; then

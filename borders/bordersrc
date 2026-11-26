@@ -4,7 +4,7 @@
 
 options=(
   style=round
-  width=4.0
+  width=4.0                                                             # ~half sits under the window, so ~2pt shows (Hyprland's border_size=2)
   hidpi=on
   active_color="gradient(top_left=0xee7aa2f7,bottom_right=0xeebb9af7)"   # blue -> magenta
   inactive_color=0xaa414868                                             # terminal_black

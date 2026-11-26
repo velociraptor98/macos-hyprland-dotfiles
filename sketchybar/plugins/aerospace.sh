@@ -9,9 +9,11 @@
 #   * nothing is sent to sketchybar when the result is identical to the last redraw
 #
 # Pills: drawn on the bar of the display their workspace lives on; only occupied +
-# on-screen workspaces are shown; focused = wide accent pill, on screen elsewhere =
-# outlined; app icons need sketchybar-app-font (APP_ICONS=on); workspaces AeroSpace
-# invents (e.g. "11") get a pill cloned on the fly.
+# on-screen workspaces are shown. Focused = wide accent capsule with app icons
+# (the width change animates); on screen elsewhere = outlined, with app icons;
+# everything else = a compact muted number, no fill. App icons need
+# sketchybar-app-font (APP_ICONS=on); workspaces AeroSpace invents (e.g. "11")
+# get a pill cloned on the fly.
 # Title: only on the focused monitor's bar; left of the notch on the MacBook screen.
 
 source "$CONFIG_DIR/style.sh"   # colors, island, workspaces_bracket
@@ -54,7 +56,7 @@ render() {
     NF >= 6    { print $1 "|" $2 "|" $3 "|" $4 "|" $5 "|" $6 "|" apps[$1] }')"
 
   local args=() shown=" " new_items=0
-  local ws display mon visible focused apps app icons bg fg border pad item
+  local ws display mon visible focused apps app icons bg fg border pad item expand
   local f_display="" f_mon="" f_layout="" root_layout
 
   while IFS='|' read -r ws display mon visible focused root_layout apps; do
@@ -82,18 +84,18 @@ render() {
     fi
 
     if [ "$focused" = "true" ]; then
-      bg=$WS_ACTIVE_BG; fg=$WS_ACTIVE_FG; border=$WS_ACTIVE_BG; pad=14
+      bg=$WS_ACTIVE_BG; fg=$WS_ACTIVE_FG; border=$WS_ACTIVE_BG; pad=16; expand=1
       f_display="$display"; f_mon="$mon"; f_layout="$root_layout"
     elif [ "$visible" = "true" ]; then
-      bg=$WS_INACTIVE_BG; fg=$WS_VISIBLE_FG; border=$WS_VISIBLE_BORDER; pad=12
+      bg=$WS_INACTIVE_BG; fg=$WS_VISIBLE_FG; border=$WS_VISIBLE_BORDER; pad=12; expand=1
     else
-      bg=$WS_INACTIVE_BG; fg=$WS_INACTIVE_FG; border=$WS_INACTIVE_BG; pad=10
+      bg=$WS_INACTIVE_BG; fg=$WS_INACTIVE_FG; border=$WS_INACTIVE_BG; pad=7; expand=0
     fi
 
     args+=(--set "$item" drawing=on display="$display"
       background.color=$bg background.border_color=$border
       icon.color=$fg label.color=$fg icon.padding_left=$pad)
-    if [ -n "$icons" ]; then
+    if [ -n "$icons" ] && [ "$expand" = 1 ]; then
       args+=(icon.padding_right=6 label="$icons" label.drawing=on label.padding_right=$pad)
     else
       args+=(icon.padding_right=$pad label.drawing=off)

@@ -2,6 +2,8 @@
 # CPU temperature, shown inside the CPU pill. Average of the CPU die sensors,
 # read by helpers/cpu_temp (compiled by sketchybarrc). Hidden if unavailable.
 
+source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+
 source "$CONFIG_DIR/colors.sh"
 
 temp="$("$CONFIG_DIR/helpers/cpu_temp" 2>/dev/null)"

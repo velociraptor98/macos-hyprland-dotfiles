@@ -4,23 +4,32 @@
 
 source "$CONFIG_DIR/colors.sh"
 
-# A floating Waybar module: dark translucent pill with a subtle border.
+# A floating module: translucent glass capsule with a hairline edge and a soft
+# shadow underneath (shadow.angle=90 = straight down).
 island=(
   background.drawing=on
   background.color=$BG
-  background.border_color=$BORDER
-  background.border_width=2
-  background.corner_radius=12
+  background.border_color=$EDGE
+  background.border_width=1
+  background.corner_radius=16
   background.height=32
+  background.shadow.drawing=on
+  background.shadow.color=$SHADOW
+  background.shadow.angle=90
+  background.shadow.distance=3
 )
 
 # Popup panel (calendar, battery, volume, power menu, mode hints).
 # Add popup.align=left|center|right per item.
 popup=(
-  popup.background.color=$BG_SOLID
-  popup.background.border_color=$BORDER
-  popup.background.border_width=2
-  popup.background.corner_radius=12
+  popup.background.color=$BG_POPUP
+  popup.background.border_color=$EDGE
+  popup.background.border_width=1
+  popup.background.corner_radius=16
+  popup.background.shadow.drawing=on
+  popup.background.shadow.color=$SHADOW
+  popup.background.shadow.angle=90
+  popup.background.shadow.distance=4
   popup.y_offset=8
   popup.blur_radius=20
 )
@@ -31,7 +40,7 @@ popup_row=(
   icon.padding_right=8
   label.padding_right=14
   background.color=$TRANSPARENT
-  background.corner_radius=8
+  background.corner_radius=10
   background.height=28
 )
 

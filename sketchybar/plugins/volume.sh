@@ -3,6 +3,8 @@
 #   left click  = slider popup     right click = mute
 #   scroll      = +/- 5%           mouse leaves the bar = close popup
 
+source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+
 source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
 
@@ -19,8 +21,11 @@ case "$SENDER" in
     fi
     ;;
   mouse.scrolled)
+    # Only set it: the volume_change event that follows redraws the item, so
+    # reading the volume back here would be a second ~100ms osascript per notch.
     if [ "${SCROLL_DELTA:-0}" -gt 0 ]; then step=5; else step=-5; fi
     osascript -e "set volume output volume ((output volume of (get volume settings)) + $step)"
+    exit 0
     ;;
 esac
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Window titles change without any event (browser tab switch, file save...).
-# Every few seconds: one aerospace query, compared (as a checksum — titles are
+# Every 5 seconds: one aerospace query, compared (as a checksum — titles are
 # never written to disk) with what the controller last drew. Only if it differs
 # is a redraw requested — otherwise nothing happens.
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Battery: icon + %, and a click-only popup with power source and time remaining.
 
+source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+
 source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
 

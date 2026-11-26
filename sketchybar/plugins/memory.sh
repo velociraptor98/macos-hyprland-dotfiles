@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Memory in use (100 - "System-wide memory free percentage").
 
+source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+
 source "$CONFIG_DIR/colors.sh"
 
 free="$(memory_pressure 2>/dev/null | awk -F': ' '/free percentage/ { gsub("%", "", $2); print $2 }')"

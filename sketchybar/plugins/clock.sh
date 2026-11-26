@@ -2,6 +2,8 @@
 # Drives both clock items: `date` (Wed 25 Nov) and `clock` (14:32).
 # Clicking either opens the calendar popup (attached to `date`).
 
+source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+
 case "$SENDER" in
   mouse.clicked)
     exec "$CONFIG_DIR/plugins/calendar.sh"

@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 #  SketchyBar as Waybar — Hyprland-style bar for AeroSpace, Tokyo Night
 #
-#  [  ] [ 1 2 3 S ] [▥] [RESIZE]    [ app · window title ]    [ cpu temp mem ] [ wifi vol bat ] [ date time ]
+#  [  ] [ 1 2 3 S ] [▥] [RESIZE]    [ app · window title ]    [ cpu ⌇ temp mem │ wifi vol bat ] [ date time ]
 #
 #  Floating "islands" on a transparent bar, 10px side margin = AeroSpace's 10px outer gaps, so bar and windows line up.
 #  Popups (click; close when the mouse leaves the bar): logo = power menu,
@@ -45,6 +45,10 @@ source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
 PLUGIN_DIR="$CONFIG_DIR/plugins"
 
+# Constants looked up once here instead of on every plugin run.
+NCPU="$(sysctl -n hw.ncpu)"
+WIFI_DEV="$(networksetup -listallhardwareports | awk '/Wi-Fi/ { getline; print $2; exit }')"
+
 ##### Fonts ####################################################################
 families="$(osascript -l JavaScript -e 'ObjC.import("AppKit"); ObjC.deepUnwrap($.NSFontManager.sharedFontManager.availableFontFamilies).join("\n")' 2>/dev/null)"
 has_font() { printf '%s\n' "$families" | grep -qx "$1"; }
@@ -84,13 +88,13 @@ default=(
   icon.font="$FONT:Bold:15.0"
   label.font="$FONT:$LABEL_STYLE:13.0"
   icon.color=$FG
-  label.color=$FG
+  label.color=$FG_DARK          # coloured icons lead, labels recede
   icon.padding_left=8
   icon.padding_right=5
   label.padding_left=0
   label.padding_right=8
   background.height=24
-  background.corner_radius=8
+  background.corner_radius=12
 )
 sketchybar --default "${default[@]}"
 
@@ -118,7 +122,7 @@ sketchybar --add item logo left \
     icon.padding_right=13 \
     label.drawing=off \
     script="$PLUGIN_DIR/popup_toggle.sh" \
-  --subscribe logo mouse.clicked mouse.exited.global
+  --subscribe logo mouse.clicked mouse.exited.global mouse.entered mouse.exited
 
 power_row() { # name icon color label command
   sketchybar --add item "power.$1" popup.logo \
@@ -162,7 +166,7 @@ for ws in 1 2 3 4 5 6 7 8 9 10 S; do
       background.border_width=1 \
       background.border_color=$WS_INACTIVE_BG \
       background.height=24 \
-      background.corner_radius=8 \
+      background.corner_radius=12 \
       click_script="aerospace workspace $ws" \
       script="$PLUGIN_DIR/workspace_mouse.sh" \
     --subscribe "workspace.$ws" mouse.entered mouse.exited mouse.scrolled
@@ -204,7 +208,7 @@ sketchybar --add item layout left \
     icon.padding_right=12 \
     label.drawing=off \
     script="$PLUGIN_DIR/layout.sh" \
-  --subscribe layout mouse.clicked
+  --subscribe layout mouse.clicked mouse.entered mouse.exited
 
 ##### Left: binding mode (hyprland/submap) + key hints ##########################
 sketchybar --add item mode left \
@@ -214,7 +218,7 @@ sketchybar --add item mode left \
     updates=on \
     padding_left=8 \
     background.height=32 \
-    background.corner_radius=12 \
+    background.corner_radius=16 \
     icon.padding_left=12 \
     label.padding_right=12 \
     script="$PLUGIN_DIR/mode.sh" \
@@ -259,7 +263,10 @@ sketchybar --add item front_app center \
     label.padding_left=12 \
     label.padding_right=14 \
     label.color=$FG \
-    drawing=off   # content + placement are set by the aerospace controller
+    script="$PLUGIN_DIR/hover.sh" \
+    drawing=off \
+  --subscribe front_app mouse.entered mouse.exited
+  # content + placement are set by the aerospace controller
 [ "$APP_ICONS" = "on" ] && sketchybar --set front_app label.padding_left=0
 
 # Titles change without events (tab switches): a cheap check that only asks the
@@ -268,7 +275,7 @@ sketchybar --add item title_poll left \
   --set title_poll \
     drawing=off \
     updates=on \
-    update_freq=3 \
+    update_freq=5 \
     script="$PLUGIN_DIR/title_poll.sh"
 
 ##### Right: clock (rightmost) #################################################
@@ -276,10 +283,11 @@ sketchybar --add item clock right \
   --set clock \
     icon="$ICON_CLOCK" \
     icon.color=$BLUE \
+    label.color=$FG \
     label.padding_right=13 \
     update_freq=5 \
-    script="$PLUGIN_DIR/clock.sh" \
-  --subscribe clock mouse.clicked \
+    script="ISLAND=clock_island $PLUGIN_DIR/clock.sh" \
+  --subscribe clock mouse.clicked mouse.entered mouse.exited \
   --add item date right \
   --set date "${popup[@]}" \
     popup.align=center \
@@ -287,8 +295,8 @@ sketchybar --add item clock right \
     icon.color=$MAGENTA \
     icon.padding_left=13 \
     update_freq=60 \
-    script="$PLUGIN_DIR/clock.sh" \
-  --subscribe date mouse.clicked mouse.exited.global \
+    script="ISLAND=clock_island $PLUGIN_DIR/clock.sh" \
+  --subscribe date mouse.clicked mouse.exited.global mouse.entered mouse.exited \
   --add bracket clock_island date clock \
   --set clock_island "${island[@]}"
 
@@ -311,33 +319,32 @@ sketchybar --set cal.0 label.font="$FONT:Bold:14.0" label.color=$ACCENT backgrou
 
 spacer gap.clock right 8
 
-##### Right: wifi / volume / battery ###########################################
+##### Right: status island — cpu / temp / mem │ wifi / volume / battery ########
+# One island (status_island, bracketed at the end of this section) with a thin
+# divider between the two groups.
 sketchybar --add item battery right \
   --set battery "${popup[@]}" \
     popup.align=center \
     label.padding_right=13 \
     update_freq=120 \
-    script="$PLUGIN_DIR/battery.sh" \
-  --subscribe battery system_woke power_source_change mouse.clicked mouse.exited.global \
+    script="ISLAND=status_island $PLUGIN_DIR/battery.sh" \
+  --subscribe battery system_woke power_source_change mouse.clicked mouse.exited.global mouse.entered mouse.exited \
   \
   --add item volume right \
   --set volume "${popup[@]}" \
     popup.align=center \
-    script="$PLUGIN_DIR/volume.sh" \
-  --subscribe volume volume_change mouse.clicked mouse.scrolled mouse.exited.global \
+    script="ISLAND=status_island $PLUGIN_DIR/volume.sh" \
+  --subscribe volume volume_change mouse.clicked mouse.scrolled mouse.exited.global mouse.entered mouse.exited \
   \
   --add item wifi right \
   --set wifi \
-    icon.padding_left=13 \
+    icon.padding_left=8 \
     icon.padding_right=8 \
     label.drawing=off \
     update_freq=30 \
-    script="$PLUGIN_DIR/wifi.sh" \
+    script="ISLAND=status_island WIFI_DEV=$WIFI_DEV $PLUGIN_DIR/wifi.sh" \
     click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'" \
-  --subscribe wifi wifi_change system_woke \
-  \
-  --add bracket system_island wifi volume battery \
-  --set system_island "${island[@]}"
+  --subscribe wifi wifi_change system_woke mouse.entered mouse.exited
 
 # Battery popup (filled by battery.sh on click)
 sketchybar --add item battery.source popup.battery \
@@ -374,9 +381,19 @@ sketchybar --add slider volume.slider popup.volume 180 \
     click_script="sketchybar --set volume popup.drawing=off; open 'x-apple.systempreferences:com.apple.Sound-Settings.extension'" \
   --subscribe volume.settings mouse.entered mouse.exited
 
-spacer gap.system right 8
+sketchybar --add item divider.status right \
+  --set divider.status \
+    width=1 \
+    padding_left=4 \
+    padding_right=4 \
+    icon.drawing=off \
+    label.drawing=off \
+    background.drawing=on \
+    background.color=$EDGE \
+    background.height=14 \
+    background.corner_radius=0
 
-##### Right: cpu / temperature / memory ########################################
+# cpu / temperature / memory
 # CPU temperature comes from a tiny C helper (no sudo, no brew package). Build it
 # on first run or when its source changes; skip if the Xcode CLT aren't installed
 # (calling the /usr/bin/clang stub would pop up an install dialog). Without the
@@ -390,17 +407,31 @@ fi
 sketchybar --add item memory right \
   --set memory \
     icon="$ICON_MEMORY" \
-    label.padding_right=13 \
+    label.padding_right=8 \
     update_freq=10 \
-    script="$PLUGIN_DIR/memory.sh" \
+    script="ISLAND=status_island $PLUGIN_DIR/memory.sh" \
     click_script="open -a 'Activity Monitor'" \
+  --subscribe memory mouse.entered mouse.exited \
   \
   --add item cpu_temp right \
   --set cpu_temp \
     drawing=off \
     icon="$ICON_TEMP" \
     update_freq=5 \
-    script="$PLUGIN_DIR/cpu_temp.sh" \
+    script="ISLAND=status_island $PLUGIN_DIR/cpu_temp.sh" \
+    click_script="open -a 'Activity Monitor'" \
+  --subscribe cpu_temp mouse.entered mouse.exited \
+  \
+  --add graph cpu.graph right 32 \
+  --set cpu.graph \
+    icon.drawing=off \
+    label.drawing=off \
+    padding_right=2 \
+    background.drawing=on \
+    background.color=$TRANSPARENT \
+    background.height=14 \
+    graph.line_width=1.5 \
+    graph.color=$BLUE \
     click_script="open -a 'Activity Monitor'" \
   \
   --add item cpu right \
@@ -408,11 +439,12 @@ sketchybar --add item memory right \
     icon="$ICON_CPU" \
     icon.padding_left=13 \
     update_freq=5 \
-    script="$PLUGIN_DIR/cpu.sh" \
+    script="ISLAND=status_island NCPU=$NCPU $PLUGIN_DIR/cpu.sh" \
     click_script="open -a 'Activity Monitor'" \
+  --subscribe cpu mouse.entered mouse.exited \
   \
-  --add bracket stats_island cpu cpu_temp memory \
-  --set stats_island "${island[@]}"
+  --add bracket status_island cpu cpu.graph cpu_temp memory divider.status wifi volume battery \
+  --set status_island "${island[@]}"
 
 ##### Go #######################################################################
 # Reload on save, like Hyprland does with hyprland.conf.
