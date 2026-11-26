@@ -1,0 +1,284 @@
+# ~/.aerospace.toml — Hyprland-flavoured AeroSpace config
+#
+# "SUPER" ($mainMod in hyprland.conf) is mapped to ALT here. cmd would collide with
+# almost every macOS app shortcut (cmd-c, cmd-q, cmd-v...), so alt is the sane SUPER.
+#
+# Bindings follow the stock hyprland.conf where an equivalent exists:
+#   SUPER+Q terminal   SUPER+C close        SUPER+E file manager   SUPER+R launcher
+#   SUPER+V float      SUPER+S scratchpad   SUPER+1..0 workspaces  SUPER+SHIFT+1..0 move to ws
+# plus the usual community additions (hjkl, fullscreen, resize submap).
+
+config-version = 2
+
+# Hyprland-style active/inactive borders come from JankyBorders (AeroSpace has none of its own).
+# It runs as a brew service and is configured in ~/.config/borders/bordersrc (Tokyo Night).
+after-startup-command = []
+
+# SketchyBar (Waybar-style bar) integration — see ~/.config/sketchybar/sketchybarrc
+# (No variables passed: the bar queries AeroSpace itself, so nothing is shell-expanded here.)
+exec-on-workspace-change = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_workspace_change']
+
+start-at-login = true
+
+# Hyprland reloads hyprland.conf on save — do the same.
+auto-reload-config = true
+
+# ---------------------------------------------------------------------------
+# Layout (closest thing to Hyprland's dwindle: new windows split the focused
+# one, and nested splits alternate orientation)
+# ---------------------------------------------------------------------------
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+accordion-padding = 30
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+# Hyprland has no "hidden app" concept; keep every window on the tiling grid.
+automatically-unhide-macos-hidden-apps = true
+
+# Hyprland creates/destroys workspaces dynamically.
+persistent-workspaces = []
+
+# Drives SketchyBar's submap/mode pill.
+# Mode pill + key hints; the refresh also catches layout changes made in service mode.
+on-mode-changed = [
+    'exec-and-forget sketchybar --trigger aerospace_mode_change',
+    'exec-and-forget sketchybar --trigger aerospace_refresh',
+]
+
+# Hyprland default: input:follow_mouse = 1 (focus follows mouse)
+focus-follows-mouse.enabled = true
+
+# Hyprland warps the cursor to the window you focus with the keyboard
+# (cursor:no_warps = false). Needed so focus-follows-mouse doesn't steal focus back.
+# The sketchybar trigger keeps the bar's window title + workspace app icons live.
+on-focus-changed = [
+    'move-mouse window-lazy-center',
+    'exec-and-forget sketchybar --trigger aerospace_focus_change',
+]
+on-focused-monitor-changed = [
+    'move-mouse monitor-lazy-center',
+    'exec-and-forget sketchybar --trigger aerospace_focus_change',
+]
+
+key-mapping.preset = 'qwerty'
+
+# ---------------------------------------------------------------------------
+# Gaps — Hyprland defaults are gaps_in = 5 (per window, so 10 between two
+# windows) and gaps_out = 20.
+# ---------------------------------------------------------------------------
+gaps.inner.horizontal = 10
+gaps.inner.vertical   = 10
+gaps.outer.left       = 20
+gaps.outer.bottom     = 20
+# top = SketchyBar's y_offset 10 + height 32 + 10px, like Waybar's exclusive zone.
+# The MacBook's notch keeps 32px reserved even with the menu bar auto-hidden, so 52 - 32 = 20 there.
+gaps.outer.top        = [{ monitor.'built-in' = 20 }, 52]
+gaps.outer.right      = 20
+
+# ---------------------------------------------------------------------------
+# Window rules (hyprland `windowrule = float, ...`)
+# ---------------------------------------------------------------------------
+[[on-window-detected]]
+    if.app-id = 'com.apple.systempreferences'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'com.apple.calculator'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'com.1password.1password'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'org.keepassxc.keepassxc'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'eu.exelban.Stats'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.app-id = 'com.apple.apps.launcher'
+    run = 'layout floating'
+
+# ---------------------------------------------------------------------------
+# Main bindings
+# ---------------------------------------------------------------------------
+[mode.main.binding]
+
+    # --- Apps (hyprland.conf defaults) ---------------------------------------
+    # SUPER+Q -> terminal: new window of $TERMINAL_APP (set in [exec.env-vars] at the bottom)
+    alt-q = '''exec-and-forget osascript -e "tell application \"$TERMINAL_APP\" to activate" -e 'tell application "System Events" to keystroke "n" using command down' '''
+    alt-enter = '''exec-and-forget osascript -e "tell application \"$TERMINAL_APP\" to activate" -e 'tell application "System Events" to keystroke "n" using command down' '''
+    # SUPER+E -> file manager
+    alt-e = 'exec-and-forget open ~'
+    # SUPER+R -> app launcher
+    alt-r = 'exec-and-forget open -a Apps'
+
+    # --- Window management (layout keys also refresh SketchyBar's layout icon) ---------------------------------------------------
+    # SUPER+C -> killactive
+    alt-c = 'close'
+    # SUPER+V -> togglefloating
+    alt-v = ['layout floating tiling', 'exec-and-forget sketchybar --trigger aerospace_refresh']
+    # SUPER+J in stock Hyprland is togglesplit; J is taken by vim focus here, so T.
+    alt-t = ['layout horizontal vertical', 'exec-and-forget sketchybar --trigger aerospace_refresh']
+    # fullscreen, 0 (whole screen) / fullscreen, 1 (maximize, keep gaps)
+    alt-f = 'fullscreen --no-outer-gaps'
+    alt-shift-f = 'fullscreen'
+    # Tabbed/grouped-ish view (closest thing to Hyprland groups)
+    alt-w = ['layout accordion tiles', 'exec-and-forget sketchybar --trigger aerospace_refresh']
+    alt-slash = ['layout tiles horizontal vertical', 'exec-and-forget sketchybar --trigger aerospace_refresh']
+
+    # --- Focus (movefocus) — crosses monitors like Hyprland ------------------
+    alt-h = 'focus --boundaries all-monitors-outer-frame left'
+    alt-j = 'focus --boundaries all-monitors-outer-frame down'
+    alt-k = 'focus --boundaries all-monitors-outer-frame up'
+    alt-l = 'focus --boundaries all-monitors-outer-frame right'
+    alt-left  = 'focus --boundaries all-monitors-outer-frame left'
+    alt-down  = 'focus --boundaries all-monitors-outer-frame down'
+    alt-up    = 'focus --boundaries all-monitors-outer-frame up'
+    alt-right = 'focus --boundaries all-monitors-outer-frame right'
+
+    # --- Move (movewindow) ---------------------------------------------------
+    alt-shift-h = 'move --boundaries all-monitors-outer-frame left'
+    alt-shift-j = 'move --boundaries all-monitors-outer-frame down'
+    alt-shift-k = 'move --boundaries all-monitors-outer-frame up'
+    alt-shift-l = 'move --boundaries all-monitors-outer-frame right'
+    alt-shift-left  = 'move --boundaries all-monitors-outer-frame left'
+    alt-shift-down  = 'move --boundaries all-monitors-outer-frame down'
+    alt-shift-up    = 'move --boundaries all-monitors-outer-frame up'
+    alt-shift-right = 'move --boundaries all-monitors-outer-frame right'
+
+    # --- Resize (binde = SUPER CTRL, hjkl, resizeactive) ---------------------
+    alt-ctrl-h = 'resize width -50'
+    alt-ctrl-l = 'resize width +50'
+    alt-ctrl-k = 'resize height -50'
+    alt-ctrl-j = 'resize height +50'
+    alt-minus = 'resize smart -50'
+    alt-equal = 'resize smart +50'
+    # Hyprland-wiki style resize submap
+    alt-shift-r = 'mode resize'
+
+    # --- Workspaces (SUPER+[1-0]) --------------------------------------------
+    alt-1 = 'workspace 1'
+    alt-2 = 'workspace 2'
+    alt-3 = 'workspace 3'
+    alt-4 = 'workspace 4'
+    alt-5 = 'workspace 5'
+    alt-6 = 'workspace 6'
+    alt-7 = 'workspace 7'
+    alt-8 = 'workspace 8'
+    alt-9 = 'workspace 9'
+    alt-0 = 'workspace 10'
+
+    # SUPER+SHIFT+[1-0] -> movetoworkspace (window moves AND you follow it)
+    alt-shift-1 = 'move-node-to-workspace --focus-follows-window 1'
+    alt-shift-2 = 'move-node-to-workspace --focus-follows-window 2'
+    alt-shift-3 = 'move-node-to-workspace --focus-follows-window 3'
+    alt-shift-4 = 'move-node-to-workspace --focus-follows-window 4'
+    alt-shift-5 = 'move-node-to-workspace --focus-follows-window 5'
+    alt-shift-6 = 'move-node-to-workspace --focus-follows-window 6'
+    alt-shift-7 = 'move-node-to-workspace --focus-follows-window 7'
+    alt-shift-8 = 'move-node-to-workspace --focus-follows-window 8'
+    alt-shift-9 = 'move-node-to-workspace --focus-follows-window 9'
+    alt-shift-0 = 'move-node-to-workspace --focus-follows-window 10'
+
+    # SUPER+CTRL+[1-0] -> movetoworkspacesilent (window moves, you stay)
+    alt-ctrl-1 = 'move-node-to-workspace 1'
+    alt-ctrl-2 = 'move-node-to-workspace 2'
+    alt-ctrl-3 = 'move-node-to-workspace 3'
+    alt-ctrl-4 = 'move-node-to-workspace 4'
+    alt-ctrl-5 = 'move-node-to-workspace 5'
+    alt-ctrl-6 = 'move-node-to-workspace 6'
+    alt-ctrl-7 = 'move-node-to-workspace 7'
+    alt-ctrl-8 = 'move-node-to-workspace 8'
+    alt-ctrl-9 = 'move-node-to-workspace 9'
+    alt-ctrl-0 = 'move-node-to-workspace 10'
+
+    # SUPER+scroll -> workspace e+1 / e-1 (keyboard version)
+    alt-leftSquareBracket  = 'workspace --wrap-around prev'
+    alt-rightSquareBracket = 'workspace --wrap-around next'
+
+    # binds:workspace_back_and_forth
+    alt-tab = 'workspace-back-and-forth'
+    # Workspaces 1-10 are pinned to monitors (see bottom), so this moves the window instead.
+    alt-shift-tab = 'move-node-to-monitor --focus-follows-window --wrap-around next'
+
+    # --- Monitors (focusmonitor / movewindow mon:) ----------------------------
+    alt-comma  = 'focus-monitor --wrap-around prev'
+    alt-period = 'focus-monitor --wrap-around next'
+    alt-shift-comma  = 'move-node-to-monitor --focus-follows-window --wrap-around prev'
+    alt-shift-period = 'move-node-to-monitor --focus-follows-window --wrap-around next'
+
+    # --- Special workspace / scratchpad (togglespecialworkspace magic) --------
+    # Toggles workspace "S" on and off like Hyprland's special workspace.
+    # summon-workspace pulls it onto whichever monitor you're on, like Hyprland does.
+    alt-s = '''exec-and-forget if [ "$(aerospace list-workspaces --focused)" = "S" ]; then aerospace workspace-back-and-forth; else aerospace summon-workspace S; fi'''
+    alt-shift-s = 'move-node-to-workspace S'
+
+    # --- Misc ----------------------------------------------------------------
+    alt-shift-semicolon = 'mode service'
+
+# ---------------------------------------------------------------------------
+# Resize submap (bind = ALT SHIFT, R, submap, resize ... bind = , escape, submap, reset)
+# ---------------------------------------------------------------------------
+[mode.resize.binding]
+    h = 'resize width -50'
+    l = 'resize width +50'
+    k = 'resize height -50'
+    j = 'resize height +50'
+    left  = 'resize width -50'
+    right = 'resize width +50'
+    up    = 'resize height -50'
+    down  = 'resize height +50'
+    minus = 'resize smart -50'
+    equal = 'resize smart +50'
+    b = ['balance-sizes', 'mode main']
+    enter = 'mode main'
+    esc = 'mode main'
+
+# ---------------------------------------------------------------------------
+# Service mode (alt-shift-;)
+# ---------------------------------------------------------------------------
+[mode.service.binding]
+    esc = ['reload-config', 'mode main']
+    r = ['flatten-workspace-tree', 'mode main'] # reset layout
+    f = ['layout floating tiling', 'mode main']
+    b = ['balance-sizes', 'mode main']
+    backspace = ['close-all-windows-but-current', 'mode main']
+
+    alt-shift-h = ['join-with left', 'mode main']
+    alt-shift-j = ['join-with down', 'mode main']
+    alt-shift-k = ['join-with up', 'mode main']
+    alt-shift-l = ['join-with right', 'mode main']
+
+# ---------------------------------------------------------------------------
+# Pin workspaces to monitors (hyprland `workspace = 1, monitor:DP-1`).
+# 1-5 -> any external display, 6-10 -> MacBook screen. With only one screen
+# connected, everything falls back to it ('main'). S (scratchpad) is unpinned.
+# '^(?!built-in)' = "monitor name does NOT start with Built-in".
+# ---------------------------------------------------------------------------
+[workspace-to-monitor-force-assignment]
+    1  = ['^(?!built-in)', 'main']
+    2  = ['^(?!built-in)', 'main']
+    3  = ['^(?!built-in)', 'main']
+    4  = ['^(?!built-in)', 'main']
+    5  = ['^(?!built-in)', 'main']
+    6  = ['built-in', 'main']
+    7  = ['built-in', 'main']
+    8  = ['built-in', 'main']
+    9  = ['built-in', 'main']
+    10 = ['built-in', 'main']
+
+# ---------------------------------------------------------------------------
+# Environment for every exec-and-forget / callback: PATH covers Homebrew on
+# Apple Silicon (/opt/homebrew) and Intel (/usr/local), so no absolute paths are needed.
+# ---------------------------------------------------------------------------
+[exec]
+    inherit-env-vars = true
+[exec.env-vars]
+    PATH = '/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:${PATH}'
+    # Terminal opened by alt-q / alt-enter (any app where cmd-n opens a new window).
+    TERMINAL_APP = 'Rex'

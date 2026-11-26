@@ -1,0 +1,13 @@
+#!/bin/bash
+# JankyBorders — Hyprland-style active/inactive borders, Tokyo Night (matches SketchyBar).
+# Read by `brew services start borders`. Edit, then: brew services restart borders
+
+options=(
+  style=round
+  width=4.0
+  hidpi=on
+  active_color="gradient(top_left=0xee7aa2f7,bottom_right=0xeebb9af7)"   # blue -> magenta
+  inactive_color=0xaa414868                                             # terminal_black
+)
+
+borders "${options[@]}"

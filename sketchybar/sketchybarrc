@@ -1,0 +1,406 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+#  SketchyBar as Waybar — Hyprland-style bar for AeroSpace, Tokyo Night
+#
+#  [  ] [ 1 2 3 S ] [▥] [RESIZE]    [ app · window title ]    [ cpu mem ] [ wifi vol bat ] [ date time ]
+#
+#  Floating "islands" on a transparent bar, aligned with AeroSpace's 20px outer gaps.
+#  Popups (click; close when the mouse leaves the bar): logo = power menu,
+#  date/time = calendar, battery = details, volume = slider (right click = mute).
+#  Mode pill shows key hints. ▥ = layout of the focused container.
+#  Multi-monitor: workspace pills, layout, mode and title follow their monitor.
+#  AeroSpace pushes events in via ~/.aerospace.toml:
+#    aerospace_workspace_change  (exec-on-workspace-change)
+#    aerospace_focus_change      (on-focus-changed)
+#    aerospace_mode_change       (on-mode-changed)
+#
+#  Fonts: a Nerd Font (JetBrainsMono preferred) for glyphs, and optionally
+#  sketchybar-app-font for per-app icons in workspaces / window title.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Runtime state (window titles etc.) lives in the per-user temp dir; keep it private.
+umask 077
+TMP_BASE="$(getconf DARWIN_USER_TEMP_DIR)"
+PIDFILE="${TMP_BASE}sketchybarrc.pid"
+
+# If a previous run of this file is still going (e.g. hotload fired while a manual
+# --reload was running), stop it and clear whatever it added, or the two runs
+# interleave their --add calls and scramble the item order.
+# Only the PID we recorded ourselves is touched, and only if it is still a
+# `bash …/sketchybarrc` process (never an editor or pager that has this file open).
+if [ -f "$PIDFILE" ]; then
+  old="$(cat "$PIDFILE" 2>/dev/null)"
+  case "$old" in
+    '' | *[!0-9]*) ;;
+    "$$") ;;
+    *) if ps -p "$old" -o command= 2>/dev/null | grep -qE '^([^ ]*/)?bash [^ ]*/sketchybarrc$'; then
+         kill "$old" 2>/dev/null
+       fi ;;
+  esac
+fi
+echo "$$" > "$PIDFILE"
+sketchybar --remove '/.*/' 2>/dev/null
+
+source "$CONFIG_DIR/colors.sh"
+source "$CONFIG_DIR/icons.sh"
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+##### Fonts ####################################################################
+families="$(osascript -l JavaScript -e 'ObjC.import("AppKit"); ObjC.deepUnwrap($.NSFontManager.sharedFontManager.availableFontFamilies).join("\n")' 2>/dev/null)"
+has_font() { printf '%s\n' "$families" | grep -qx "$1"; }
+
+FONT=""
+for f in "JetBrainsMono Nerd Font" "JetBrainsMono Nerd Font Propo" "Hack Nerd Font"; do
+  if has_font "$f"; then FONT="$f"; break; fi
+done
+[ -z "$FONT" ] && FONT="$(printf '%s\n' "$families" | grep -m1 'Nerd Font')"
+if [ -z "$FONT" ]; then
+  FONT="Menlo"
+  echo "sketchybar: no Nerd Font found, icons will not render" >&2
+fi
+case "$FONT" in JetBrains*) LABEL_STYLE="SemiBold" ;; *) LABEL_STYLE="Bold" ;; esac
+
+APP_FONT="sketchybar-app-font"
+APP_ICONS=off
+has_font "$APP_FONT" && APP_ICONS=on
+
+##### Bar ######################################################################
+sketchybar --bar \
+  position=top \
+  height=32 \
+  y_offset=10 \
+  margin=20 \
+  padding_left=0 \
+  padding_right=0 \
+  color=$TRANSPARENT \
+  shadow=off \
+  sticky=on \
+  topmost=off
+
+default=(
+  updates=when_shown
+  padding_left=0
+  padding_right=0
+  icon.font="$FONT:Bold:15.0"
+  label.font="$FONT:$LABEL_STYLE:13.0"
+  icon.color=$FG
+  label.color=$FG
+  icon.padding_left=8
+  icon.padding_right=5
+  label.padding_left=0
+  label.padding_right=8
+  background.height=24
+  background.corner_radius=8
+)
+sketchybar --default "${default[@]}"
+
+source "$CONFIG_DIR/style.sh"   # island=( ... ), workspaces_bracket
+
+spacer() { # name position [width]
+  sketchybar --add item "$1" "$2" \
+    --set "$1" width="${3:-8}" icon.drawing=off label.drawing=off background.drawing=off
+}
+
+##### Custom events from AeroSpace #############################################
+sketchybar --add event aerospace_workspace_change \
+           --add event aerospace_focus_change \
+           --add event aerospace_mode_change \
+           --add event aerospace_refresh   # internal: redraw workspace pills
+
+##### Left: logo + power menu (wlogout) ########################################
+sketchybar --add item logo left \
+  --set logo "${island[@]}" "${popup[@]}" \
+    popup.align=left \
+    icon="$ICON_APPLE" \
+    icon.font="$FONT:Bold:17.0" \
+    icon.color=$ACCENT \
+    icon.padding_left=13 \
+    icon.padding_right=13 \
+    label.drawing=off \
+    script="$PLUGIN_DIR/popup_toggle.sh" \
+  --subscribe logo mouse.clicked mouse.exited.global
+
+power_row() { # name icon color label command
+  sketchybar --add item "power.$1" popup.logo \
+    --set "power.$1" "${popup_row[@]}" \
+      width=210 \
+      icon="$2" icon.color="$3" label="$4" \
+      script="$PLUGIN_DIR/popup_row.sh" \
+      click_script="sketchybar --set logo popup.drawing=off; $5" \
+    --subscribe "power.$1" mouse.entered mouse.exited
+}
+power_row apps   "$ICON_APPS"   $ACCENT  "Apps"              "open -a Apps"
+power_row lock   "$ICON_LOCK"   $YELLOW  "Lock screen"       "pmset displaysleepnow"
+power_row sleep  "$ICON_SLEEP"  $MAGENTA "Sleep"             "pmset sleepnow"
+power_row bar    "$ICON_RELOAD" $TEAL    "Reload SketchyBar" "sketchybar --reload"
+power_row wm     "$ICON_RELOAD" $TEAL    "Reload AeroSpace"  "aerospace reload-config"
+
+spacer gap.logo left 8
+
+##### Left: workspaces (hyprland/workspaces) ###################################
+spacer ws_pad_l left 4
+
+for ws in 1 2 3 4 5 6 7 8 9 10 S; do
+  icon="$ws"
+  [ "$ws" = "S" ] && icon="$ICON_SPECIAL"   # Hyprland's special:magic workspace
+
+  sketchybar --add item "workspace.$ws" left \
+    --set "workspace.$ws" \
+      drawing=off \
+      icon="$icon" \
+      icon.font="$FONT:Bold:14.0" \
+      icon.color=$WS_INACTIVE_FG \
+      icon.padding_left=10 \
+      icon.padding_right=10 \
+      label.font="$APP_FONT:Regular:14.0" \
+      label.color=$WS_INACTIVE_FG \
+      label.y_offset=-1 \
+      label.drawing=off \
+      padding_left=2 \
+      padding_right=2 \
+      background.color=$WS_INACTIVE_BG \
+      background.border_width=1 \
+      background.border_color=$WS_INACTIVE_BG \
+      background.height=24 \
+      background.corner_radius=8 \
+      click_script="aerospace workspace $ws" \
+      script="$PLUGIN_DIR/workspace_mouse.sh" \
+    --subscribe "workspace.$ws" mouse.entered mouse.exited mouse.scrolled
+done
+
+spacer ws_pad_r left 4
+
+workspaces_bracket
+
+# Hidden controller: redraws the workspace pills AND the window title (below)
+# from one AeroSpace snapshot, coalescing bursts of events. See plugins/aerospace.sh.
+# Its "nothing changed" cache must not survive a reload (items start from defaults).
+RUNDIR="${TMP_BASE}sketchybar"
+rm -rf "$RUNDIR"; mkdir -m 700 -p "$RUNDIR"
+
+sketchybar --add item aerospace left \
+  --set aerospace \
+    drawing=off \
+    updates=on \
+    script="APP_ICONS=$APP_ICONS $PLUGIN_DIR/aerospace.sh" \
+  --subscribe aerospace \
+    aerospace_workspace_change \
+    aerospace_focus_change \
+    aerospace_refresh \
+    front_app_switched \
+    space_windows_change \
+    display_change \
+    system_woke
+
+##### Left: layout indicator ##################################################
+# Icon is set by the aerospace controller (focused monitor only).
+# Click = tiles horizontal/vertical, right click = accordion/tiles.
+sketchybar --add item layout left \
+  --set layout "${island[@]}" \
+    drawing=off \
+    padding_left=8 \
+    icon.color=$CYAN \
+    icon.padding_left=12 \
+    icon.padding_right=12 \
+    label.drawing=off \
+    script="$PLUGIN_DIR/layout.sh" \
+  --subscribe layout mouse.clicked
+
+##### Left: binding mode (hyprland/submap) + key hints ##########################
+sketchybar --add item mode left \
+  --set mode "${popup[@]}" \
+    popup.align=left \
+    drawing=off \
+    updates=on \
+    padding_left=8 \
+    background.height=32 \
+    background.corner_radius=12 \
+    icon.padding_left=12 \
+    label.padding_right=12 \
+    script="$PLUGIN_DIR/mode.sh" \
+  --subscribe mode aerospace_mode_change
+
+sketchybar --add item mode.hint.title popup.mode \
+  --set mode.hint.title "${popup_row[@]}" \
+    icon="$ICON_KEYBOARD" label="Keys" label.color=$COMMENT
+
+hint() { # mode n keys description
+  sketchybar --add item "mode.hint.$1.$2" popup.mode \
+    --set "mode.hint.$1.$2" "${popup_row[@]}" \
+      drawing=off \
+      icon="$3" icon.width=120 icon.color=$ACCENT icon.font="$FONT:Bold:13.0" \
+      label="$4"
+}
+hint resize  1 "h  l"         "narrower / wider"
+hint resize  2 "k  j"         "shorter / taller"
+hint resize  3 "-  ="         "smart shrink / grow"
+hint resize  4 "b"            "balance sizes, exit"
+hint resize  5 "esc  enter"   "exit"
+hint service 1 "esc"          "reload config, exit"
+hint service 2 "r"            "reset layout (flatten)"
+hint service 3 "f"            "float / tile window"
+hint service 4 "b"            "balance sizes"
+hint service 5 "backspace"    "close all other windows"
+hint service 6 "alt-shift-hjkl" "join with neighbour"
+
+##### Center: focused window (hyprland/window) #################################
+if [ "$APP_ICONS" = "on" ]; then
+  front_icon=(icon.font="$APP_FONT:Regular:15.0" icon.y_offset=-1)
+else
+  front_icon=(icon.drawing=off)
+fi
+
+sketchybar --add item front_app center \
+  --set front_app "${island[@]}" \
+    "${front_icon[@]}" \
+    icon.color=$ACCENT \
+    icon.padding_left=12 \
+    icon.padding_right=8 \
+    label.padding_left=12 \
+    label.padding_right=14 \
+    label.color=$FG \
+    drawing=off   # content + placement are set by the aerospace controller
+[ "$APP_ICONS" = "on" ] && sketchybar --set front_app label.padding_left=0
+
+# Titles change without events (tab switches): a cheap check that only asks the
+# controller to redraw when the focused window's title actually changed.
+sketchybar --add item title_poll left \
+  --set title_poll \
+    drawing=off \
+    updates=on \
+    update_freq=2 \
+    script="$PLUGIN_DIR/title_poll.sh"
+
+##### Right: clock (rightmost) #################################################
+sketchybar --add item clock right \
+  --set clock \
+    icon="$ICON_CLOCK" \
+    icon.color=$BLUE \
+    label.padding_right=13 \
+    update_freq=5 \
+    script="$PLUGIN_DIR/clock.sh" \
+  --subscribe clock mouse.clicked \
+  --add item date right \
+  --set date "${popup[@]}" \
+    popup.align=center \
+    icon="$ICON_CALENDAR" \
+    icon.color=$MAGENTA \
+    icon.padding_left=13 \
+    update_freq=60 \
+    script="$PLUGIN_DIR/clock.sh" \
+  --subscribe date mouse.clicked mouse.exited.global \
+  --add bracket clock_island date clock \
+  --set clock_island "${island[@]}"
+
+# Calendar popup rows (filled by plugins/calendar.sh on click): title, weekdays, 6 weeks.
+for i in 0 1 2 3 4 5 6 7; do
+  sketchybar --add item "cal.$i" popup.date \
+    --set "cal.$i" "${popup_row[@]}" \
+      icon.drawing=off \
+      label.padding_left=12 \
+      width=214 \
+      background.height=22
+done
+sketchybar --set cal.0 label.font="$FONT:Bold:14.0" label.color=$ACCENT background.height=30 \
+  --add item cal.open popup.date \
+  --set cal.open "${popup_row[@]}" \
+    icon="$ICON_CALENDAR" icon.color=$MAGENTA label="Open Calendar" \
+    script="$PLUGIN_DIR/popup_row.sh" \
+    click_script="sketchybar --set date popup.drawing=off; open -a Calendar" \
+  --subscribe cal.open mouse.entered mouse.exited
+
+spacer gap.clock right 8
+
+##### Right: wifi / volume / battery ###########################################
+sketchybar --add item battery right \
+  --set battery "${popup[@]}" \
+    popup.align=center \
+    label.padding_right=13 \
+    update_freq=120 \
+    script="$PLUGIN_DIR/battery.sh" \
+  --subscribe battery system_woke power_source_change mouse.clicked mouse.exited.global \
+  \
+  --add item volume right \
+  --set volume "${popup[@]}" \
+    popup.align=center \
+    script="$PLUGIN_DIR/volume.sh" \
+  --subscribe volume volume_change mouse.clicked mouse.scrolled mouse.exited.global \
+  \
+  --add item wifi right \
+  --set wifi \
+    icon.padding_left=13 \
+    icon.padding_right=8 \
+    label.drawing=off \
+    update_freq=30 \
+    script="$PLUGIN_DIR/wifi.sh" \
+    click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'" \
+  --subscribe wifi wifi_change system_woke \
+  \
+  --add bracket system_island wifi volume battery \
+  --set system_island "${island[@]}"
+
+# Battery popup (filled by battery.sh on click)
+sketchybar --add item battery.source popup.battery \
+  --set battery.source "${popup_row[@]}" icon="$ICON_PLUG" icon.color=$TEAL \
+  --add item battery.time popup.battery \
+  --set battery.time "${popup_row[@]}" icon="$ICON_HOURGLASS" icon.color=$YELLOW \
+  --add item battery.settings popup.battery \
+  --set battery.settings "${popup_row[@]}" \
+    icon="$ICON_SETTINGS" icon.color=$COMMENT label="Battery settings…" \
+    script="$PLUGIN_DIR/popup_row.sh" \
+    click_script="sketchybar --set battery popup.drawing=off; open 'x-apple.systempreferences:com.apple.Battery-Settings.extension'" \
+  --subscribe battery.settings mouse.entered mouse.exited
+
+# Volume popup: slider (click/drag) + settings
+sketchybar --add slider volume.slider popup.volume 180 \
+  --set volume.slider \
+    padding_left=12 \
+    padding_right=12 \
+    icon.drawing=off \
+    label.drawing=off \
+    background.height=28 \
+    slider.background.height=6 \
+    slider.background.corner_radius=3 \
+    slider.background.color=$BG_HIGHLIGHT \
+    slider.highlight_color=$GREEN \
+    slider.knob="●" \
+    slider.knob.color=$FG \
+    script="$PLUGIN_DIR/volume_slider.sh" \
+  --subscribe volume.slider mouse.clicked \
+  --add item volume.settings popup.volume \
+  --set volume.settings "${popup_row[@]}" \
+    icon="$ICON_SETTINGS" icon.color=$COMMENT label="Sound settings…" \
+    script="$PLUGIN_DIR/popup_row.sh" \
+    click_script="sketchybar --set volume popup.drawing=off; open 'x-apple.systempreferences:com.apple.Sound-Settings.extension'" \
+  --subscribe volume.settings mouse.entered mouse.exited
+
+spacer gap.system right 8
+
+##### Right: cpu / memory ######################################################
+sketchybar --add item memory right \
+  --set memory \
+    icon="$ICON_MEMORY" \
+    label.padding_right=13 \
+    update_freq=10 \
+    script="$PLUGIN_DIR/memory.sh" \
+    click_script="open -a 'Activity Monitor'" \
+  \
+  --add item cpu right \
+  --set cpu \
+    icon="$ICON_CPU" \
+    icon.padding_left=13 \
+    update_freq=3 \
+    script="$PLUGIN_DIR/cpu.sh" \
+    click_script="open -a 'Activity Monitor'" \
+  \
+  --add bracket stats_island cpu memory \
+  --set stats_island "${island[@]}"
+
+##### Go #######################################################################
+# Reload on save, like Hyprland does with hyprland.conf.
+sketchybar --hotload on
+
+sketchybar --update
+
+# Done: forget our PID (unless a newer run already replaced it).
+[ "$(cat "$PIDFILE" 2>/dev/null)" = "$$" ] && rm -f "$PIDFILE"
