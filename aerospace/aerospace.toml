@@ -22,8 +22,10 @@ after-startup-command = [
 ]
 
 # SketchyBar (Waybar-style bar) integration — see ~/.config/sketchybar/sketchybarrc
-# (No variables passed: the bar queries AeroSpace itself, so nothing is shell-expanded here.)
-exec-on-workspace-change = ['/bin/bash', '-c', 'sketchybar --trigger aerospace_workspace_change']
+# (No variables passed: the bar queries AeroSpace itself, so no shell is needed — sketchybar
+# is run directly, which saves a bash process per switch. Absolute path: no $PATH lookup here;
+# on an Intel Mac it's /usr/local/bin/sketchybar.)
+exec-on-workspace-change = ['/opt/homebrew/bin/sketchybar', '--trigger', 'aerospace_workspace_change']
 
 start-at-login = true
 
@@ -90,6 +92,17 @@ gaps.outer.top        = [{ monitor.'built-in' = 20 }, 52]
 # ---------------------------------------------------------------------------
 # Window rules (hyprland `windowrule = float, ...`)
 # ---------------------------------------------------------------------------
+# Picture-in-picture video stays floating on top instead of being tiled
+# (Safari's PiP window belongs to PIPAgent; Chromium browsers title it "Picture in picture").
+# Kept first: the first matching rule wins, so the browser workspace rules can't grab it.
+[[on-window-detected]]
+    if.app-id = 'com.apple.PIPAgent'
+    run = 'layout floating'
+
+[[on-window-detected]]
+    if.window-title-regex-substring = '(?i)^picture[ -]in[ -]picture$'
+    run = 'layout floating'
+
 [[on-window-detected]]
     if.app-id = 'com.apple.systempreferences'
     run = 'layout floating'
@@ -217,6 +230,7 @@ gaps.outer.top        = [{ monitor.'built-in' = 20 }, 52]
     alt-ctrl-j = 'resize height +50'
     alt-minus = 'resize smart -50'
     alt-equal = 'resize smart +50'
+    alt-b = 'balance-sizes'   # also b in resize/service mode
     # Hyprland-wiki style resize submap
     alt-shift-r = 'mode resize'
 
@@ -259,11 +273,13 @@ gaps.outer.top        = [{ monitor.'built-in' = 20 }, 52]
     # SUPER+scroll -> workspace e+1 / e-1 (keyboard version)
     alt-leftSquareBracket  = 'workspace --wrap-around prev'
     alt-rightSquareBracket = 'workspace --wrap-around next'
+    # movetoworkspace, e-1 / e+1 — take the window along
+    alt-shift-leftSquareBracket  = 'move-node-to-workspace --wrap-around --focus-follows-window prev'
+    alt-shift-rightSquareBracket = 'move-node-to-workspace --wrap-around --focus-follows-window next'
 
     # binds:workspace_back_and_forth
     alt-tab = 'workspace-back-and-forth'
-    # Workspaces 1-10 are pinned to monitors (see bottom), so this moves the window instead.
-    alt-shift-tab = 'move-node-to-monitor --focus-follows-window --wrap-around next'
+    # (alt-shift-tab removed: it duplicated alt-shift-period, move window to next monitor.)
 
     # --- Monitors (focusmonitor / movewindow mon:) ----------------------------
     alt-comma  = 'focus-monitor --wrap-around prev'
@@ -294,6 +310,11 @@ gaps.outer.top        = [{ monitor.'built-in' = 20 }, 52]
     down  = 'resize height +50'
     minus = 'resize smart -50'
     equal = 'resize smart +50'
+    # shift = 4x steps for big changes
+    shift-h = 'resize width -200'
+    shift-l = 'resize width +200'
+    shift-k = 'resize height -200'
+    shift-j = 'resize height +200'
     b = ['balance-sizes', 'mode main']
     enter = 'mode main'
     esc = 'mode main'

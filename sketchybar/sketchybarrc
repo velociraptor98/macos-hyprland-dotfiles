@@ -237,9 +237,10 @@ hint() { # mode n keys description
 }
 hint resize  1 "h  l"         "narrower / wider"
 hint resize  2 "k  j"         "shorter / taller"
-hint resize  3 "-  ="         "smart shrink / grow"
-hint resize  4 "b"            "balance sizes, exit"
-hint resize  5 "esc  enter"   "exit"
+hint resize  3 "shift  hjkl"  "resize in big steps"
+hint resize  4 "-  ="         "smart shrink / grow"
+hint resize  5 "b"            "balance sizes, exit"
+hint resize  6 "esc  enter"   "exit"
 hint service 1 "esc"          "reload config, exit"
 hint service 2 "r"            "reset layout (flatten)"
 hint service 3 "f"            "float / tile window"
