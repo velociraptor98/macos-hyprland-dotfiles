@@ -3,9 +3,10 @@
 # focused-window title (hyprland/window) from one snapshot of AeroSpace state.
 #
 #   * 3 aerospace queries + 1 awk + at most 1 sketchybar call per redraw
-#   * bursts of events (a focus switch fires ~3) are coalesced: while a redraw is
-#     running, new events just mark the state dirty and the running instance
-#     redraws once more at the end, so the last redraw always sees the latest state
+#   * bursts of events (a switch fires ~4 within ~60ms) are coalesced: while a redraw
+#     is running, new events just mark the state dirty and the running instance
+#     redraws once more at the end, so the last redraw always sees the latest state.
+#     (An extra wait before the first redraw was measured: no saving, only latency.)
 #   * nothing is sent to sketchybar when the result is identical to the last redraw
 #
 # Pills: drawn on the bar of the display their workspace lives on; only occupied +
@@ -15,6 +16,7 @@
 # sketchybar-app-font (APP_ICONS=on); workspaces AeroSpace invents (e.g. "11")
 # get a pill cloned on the fly.
 # Title: only on the focused monitor's bar; left of the notch on the MacBook screen.
+# Flourishes: the newly focused pill hops once; a changed title fades in.
 
 source "$CONFIG_DIR/style.sh"   # colors, island, workspaces_bracket
 source "$CONFIG_DIR/plugins/icon_map.sh"
@@ -57,7 +59,7 @@ render() {
 
   local args=() shown=" " new_items=0
   local ws display mon visible focused apps app icons bg fg border pad item expand
-  local f_display="" f_mon="" f_layout="" root_layout
+  local f_display="" f_mon="" f_layout="" f_ws="" root_layout
 
   while IFS='|' read -r ws display mon visible focused root_layout apps; do
     [ -z "$ws" ] && continue
@@ -85,7 +87,7 @@ render() {
 
     if [ "$focused" = "true" ]; then
       bg=$WS_ACTIVE_BG; fg=$WS_ACTIVE_FG; border=$WS_ACTIVE_BG; pad=16; expand=1
-      f_display="$display"; f_mon="$mon"; f_layout="$root_layout"
+      f_display="$display"; f_mon="$mon"; f_layout="$root_layout"; f_ws="$ws"
     elif [ "$visible" = "true" ]; then
       bg=$WS_INACTIVE_BG; fg=$WS_VISIBLE_FG; border=$WS_VISIBLE_BORDER; pad=12; expand=1
     else
@@ -132,6 +134,7 @@ EOF
   if [ -n "$focused_id" ]; then
     line="$(printf '%s\n' "$win_state" | awk -F'|' -v id="$focused_id" '$1 == id { print; exit }')"
   fi
+  local shown_sig="none"
   if [ -z "$line" ]; then
     args+=(--set front_app drawing=off)
     printf 'none' > "$FOCUSED"
@@ -155,6 +158,7 @@ EOF
     else
       args+=(--set front_app drawing=on label="$app  ·  $title")
     fi
+    shown_sig="$(printf '%s|%s' "$app" "$title" | cksum)"   # checksum only: titles never hit disk
   fi
 
   # ── Apply (skip if nothing changed) ───────────────────────────────────────
@@ -165,7 +169,25 @@ EOF
     return
   fi
   printf '%s\n' "$sig" > "$LAST"
-  sketchybar --animate tanh 15 "${args[@]}"
+
+  # Title fade-in: if what the title shows changed, start it transparent and
+  # let the animated update below bring it to full colour.
+  local pre=() post=() prev_shown="" prev_ws=""
+  [ -f "$RUNDIR/title.shown" ] && IFS= read -r prev_shown < "$RUNDIR/title.shown"
+  if [ "$shown_sig" != "none" ] && [ "$shown_sig" != "$prev_shown" ]; then
+    pre=(--set front_app label.color="0x00${FG#0xff}" icon.color="0x00${ACCENT#0xff}")
+    post=(--set front_app label.color=$FG icon.color=$ACCENT)
+  fi
+  printf '%s\n' "$shown_sig" > "$RUNDIR/title.shown"
+
+  sketchybar "${pre[@]}" --animate tanh 15 "${args[@]}" "${post[@]}"
+
+  # Workspace hop: the newly focused pill jumps 3px and settles (one-off).
+  [ -f "$RUNDIR/focused.ws" ] && IFS= read -r prev_ws < "$RUNDIR/focused.ws"
+  if [ -n "$f_ws" ] && [ "$f_ws" != "$prev_ws" ]; then
+    printf '%s\n' "$f_ws" > "$RUNDIR/focused.ws"
+    sketchybar --animate sin 7 --set "workspace.$f_ws" y_offset=3 y_offset=0
+  fi
 }
 
 # ── Coalescing lock ─────────────────────────────────────────────────────────

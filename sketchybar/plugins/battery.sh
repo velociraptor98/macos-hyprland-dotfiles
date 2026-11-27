@@ -5,10 +5,11 @@ source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, e
 
 source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/plugins/popup.sh"
 source "$CONFIG_DIR/plugins/alert.sh"
 
 if [ "$SENDER" = "mouse.exited.global" ]; then
-  sketchybar --set "$NAME" popup.drawing=off
+  island_popup_close status_island
   exit 0
 fi
 
@@ -62,5 +63,5 @@ esac
 if [ "$on_ac" = true ]; then source_label="Power adapter · ${pct}%"; else source_label="Battery · ${pct}%"; fi
 
 sketchybar --set battery.source label="$source_label" \
-           --set battery.time label="$status" \
-           --set "$NAME" popup.drawing=toggle
+           --set battery.time label="$status"
+island_popup_toggle status_island "battery.source battery.time battery.settings" "volume.slider volume.settings"

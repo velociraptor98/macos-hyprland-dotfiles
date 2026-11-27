@@ -3,6 +3,7 @@
 # read by helpers/cpu_temp (compiled by sketchybarrc). Hidden if unavailable.
 
 source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+[ "$SENDER" = "mouse.clicked" ] && exit 0   # flash done; click_script opens the app
 
 source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/plugins/alert.sh"

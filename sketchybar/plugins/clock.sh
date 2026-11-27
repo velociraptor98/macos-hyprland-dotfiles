@@ -9,7 +9,7 @@ case "$SENDER" in
     exec "$CONFIG_DIR/plugins/calendar.sh"
     ;;
   mouse.exited.global)
-    sketchybar --set date popup.drawing=off
+    sketchybar --set clock_island popup.drawing=off
     exit 0
     ;;
 esac

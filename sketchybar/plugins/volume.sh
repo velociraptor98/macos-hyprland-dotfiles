@@ -7,17 +7,18 @@ source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, e
 
 source "$CONFIG_DIR/colors.sh"
 source "$CONFIG_DIR/icons.sh"
+source "$CONFIG_DIR/plugins/popup.sh"
 
 case "$SENDER" in
   mouse.exited.global)
-    sketchybar --set "$NAME" popup.drawing=off
+    island_popup_close status_island
     exit 0
     ;;
   mouse.clicked)
     if [ "$BUTTON" = "right" ]; then
       osascript -e 'set volume output muted (not output muted of (get volume settings))'
     else
-      sketchybar --set "$NAME" popup.drawing=toggle
+      island_popup_toggle status_island "volume.slider volume.settings" "battery.source battery.time battery.settings"
     fi
     ;;
   mouse.scrolled)

@@ -4,6 +4,7 @@
 export BLACK=0xff15161e
 export BG=0xbf1a1b26          # bar islands (75% opaque)
 export BG_HOVER=0xbf292e42    # island under the mouse
+export BG_FLASH=0xd9414868    # brief flash when an island is clicked
 export BG_POPUP=0xd91a1b26    # popups (85%, frosted by popup.blur_radius)
 export BG_SOLID=0xff1a1b26
 export BG_HIGHLIGHT=0xff292e42

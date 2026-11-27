@@ -3,6 +3,7 @@
 # (cpu.graph) of the last ~3 minutes, coloured by the current load.
 
 source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
+[ "$SENDER" = "mouse.clicked" ] && exit 0   # flash done; click_script opens the app
 
 source "$CONFIG_DIR/colors.sh"
 

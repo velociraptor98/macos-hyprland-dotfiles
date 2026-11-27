@@ -72,7 +72,7 @@ has_font "$APP_FONT" && APP_ICONS=on
 sketchybar --bar \
   position=top \
   height=32 \
-  y_offset=10 \
+  y_offset=-50 \
   margin=10 \
   padding_left=0 \
   padding_right=0 \
@@ -106,8 +106,10 @@ spacer() { # name position [width]
 }
 
 divider() { # name position — thin vertical line between groups inside an island
+  # A fixed-width item ignores its own padding, so the gap on each side comes from
+  # the neighbours: 12px label.padding_right before it, 12px icon.padding_left after.
   sketchybar --add item "$1" "$2" \
-    --set "$1" width=1 padding_left=4 padding_right=4 \
+    --set "$1" width=1 padding_left=0 padding_right=0 \
       icon.drawing=off label.drawing=off \
       background.drawing=on background.color=$EDGE background.height=14 background.corner_radius=0
 }
@@ -307,6 +309,7 @@ sketchybar --add item clock right \
   --set clock \
     icon="$ICON_CLOCK" \
     icon.color=$BLUE \
+    icon.padding_left=12 \
     label.color=$FG \
     label.padding_right=13 \
     update_freq=5 \
@@ -314,32 +317,46 @@ sketchybar --add item clock right \
   --subscribe clock mouse.clicked mouse.entered mouse.exited
 divider divider.clock right
 sketchybar --add item date right \
-  --set date "${popup[@]}" \
-    popup.align=center \
+  --set date \
     icon="$ICON_CALENDAR" \
     icon.color=$MAGENTA \
     icon.padding_left=13 \
+    label.padding_right=12 \
     update_freq=60 \
     script="ISLAND=clock_island $PLUGIN_DIR/clock.sh" \
   --subscribe date mouse.clicked mouse.exited.global mouse.entered mouse.exited \
   --add bracket clock_island date divider.clock clock \
-  --set clock_island "${island[@]}"
+  --set clock_island "${island[@]}" "${popup[@]}" popup.align=right   # calendar hangs from the island
 
 # Calendar popup rows (filled by plugins/calendar.sh on click): title, weekdays, 6 weeks.
+# Today's row is split: the days before today go in the icon (same font, so the
+# monospace grid holds) and the label starts at today, with a fixed 20px width so
+# its background is a ring around today's number only (the rest of the week overflows it).
+# label.background.drawing=off must come after the colour: setting a colour switches it on.
 for i in 0 1 2 3 4 5 6 7; do
-  sketchybar --add item "cal.$i" popup.date \
+  sketchybar --add item "cal.$i" popup.clock_island \
     --set "cal.$i" "${popup_row[@]}" \
       icon.drawing=off \
+      icon.font="$FONT:$LABEL_STYLE:13.0" \
+      icon.color=$FG \
+      icon.padding_left=12 \
+      icon.padding_right=8 \
       label.padding_left=12 \
-      width=214 \
+      label.background.color=0x407aa2f7 \
+      label.background.border_color=$ACCENT \
+      label.background.border_width=1 \
+      label.background.corner_radius=10 \
+      label.background.height=20 \
+      label.background.drawing=off \
+      width=250 \
       background.height=22
 done
 sketchybar --set cal.0 label.font="$FONT:Bold:14.0" label.color=$ACCENT background.height=30 \
-  --add item cal.open popup.date \
+  --add item cal.open popup.clock_island \
   --set cal.open "${popup_row[@]}" \
     icon="$ICON_CALENDAR" icon.color=$MAGENTA label="Open Calendar" \
     script="$PLUGIN_DIR/popup_row.sh" \
-    click_script="sketchybar --set date popup.drawing=off; open -a Calendar" \
+    click_script="sketchybar --set clock_island popup.drawing=off; open -a Calendar" \
   --subscribe cal.open mouse.entered mouse.exited
 
 spacer gap.clock right 8
@@ -348,63 +365,26 @@ spacer gap.clock right 8
 # One island (status_island, bracketed at the end of this section) with a thin
 # divider between the two groups.
 sketchybar --add item battery right \
-  --set battery "${popup[@]}" \
-    popup.align=center \
+  --set battery \
     label.padding_right=13 \
     update_freq=120 \
     script="ISLAND=status_island $PLUGIN_DIR/battery.sh" \
   --subscribe battery system_woke power_source_change mouse.clicked mouse.exited.global mouse.entered mouse.exited \
   \
   --add item volume right \
-  --set volume "${popup[@]}" \
-    popup.align=center \
+  --set volume \
     script="ISLAND=status_island $PLUGIN_DIR/volume.sh" \
   --subscribe volume volume_change mouse.clicked mouse.scrolled mouse.exited.global mouse.entered mouse.exited \
   \
   --add item wifi right \
   --set wifi \
-    icon.padding_left=8 \
+    icon.padding_left=12 \
     icon.padding_right=8 \
     label.drawing=off \
     update_freq=30 \
     script="ISLAND=status_island WIFI_DEV=$WIFI_DEV $PLUGIN_DIR/wifi.sh" \
     click_script="open 'x-apple.systempreferences:com.apple.wifi-settings-extension'" \
-  --subscribe wifi wifi_change system_woke mouse.entered mouse.exited
-
-# Battery popup (filled by battery.sh on click)
-sketchybar --add item battery.source popup.battery \
-  --set battery.source "${popup_row[@]}" icon="$ICON_PLUG" icon.color=$TEAL \
-  --add item battery.time popup.battery \
-  --set battery.time "${popup_row[@]}" icon="$ICON_HOURGLASS" icon.color=$YELLOW \
-  --add item battery.settings popup.battery \
-  --set battery.settings "${popup_row[@]}" \
-    icon="$ICON_SETTINGS" icon.color=$COMMENT label="Battery settings…" \
-    script="$PLUGIN_DIR/popup_row.sh" \
-    click_script="sketchybar --set battery popup.drawing=off; open 'x-apple.systempreferences:com.apple.Battery-Settings.extension'" \
-  --subscribe battery.settings mouse.entered mouse.exited
-
-# Volume popup: slider (click/drag) + settings
-sketchybar --add slider volume.slider popup.volume 180 \
-  --set volume.slider \
-    padding_left=12 \
-    padding_right=12 \
-    icon.drawing=off \
-    label.drawing=off \
-    background.height=28 \
-    slider.background.height=6 \
-    slider.background.corner_radius=3 \
-    slider.background.color=$BG_HIGHLIGHT \
-    slider.highlight_color=$GREEN \
-    slider.knob="●" \
-    slider.knob.color=$FG \
-    script="$PLUGIN_DIR/volume_slider.sh" \
-  --subscribe volume.slider mouse.clicked \
-  --add item volume.settings popup.volume \
-  --set volume.settings "${popup_row[@]}" \
-    icon="$ICON_SETTINGS" icon.color=$COMMENT label="Sound settings…" \
-    script="$PLUGIN_DIR/popup_row.sh" \
-    click_script="sketchybar --set volume popup.drawing=off; open 'x-apple.systempreferences:com.apple.Sound-Settings.extension'" \
-  --subscribe volume.settings mouse.entered mouse.exited
+  --subscribe wifi wifi_change system_woke mouse.entered mouse.exited mouse.clicked
 
 divider divider.status right
 
@@ -422,11 +402,11 @@ fi
 sketchybar --add item memory right \
   --set memory \
     icon="$ICON_MEMORY" \
-    label.padding_right=8 \
+    label.padding_right=12 \
     update_freq=10 \
     script="ISLAND=status_island $PLUGIN_DIR/memory.sh" \
     click_script="open -a 'Activity Monitor'" \
-  --subscribe memory mouse.entered mouse.exited \
+  --subscribe memory mouse.entered mouse.exited mouse.clicked \
   \
   --add item cpu_temp right \
   --set cpu_temp \
@@ -435,7 +415,7 @@ sketchybar --add item memory right \
     update_freq=5 \
     script="ISLAND=status_island $PLUGIN_DIR/cpu_temp.sh" \
     click_script="open -a 'Activity Monitor'" \
-  --subscribe cpu_temp mouse.entered mouse.exited \
+  --subscribe cpu_temp mouse.entered mouse.exited mouse.clicked \
   \
   --add graph cpu.graph right 32 \
   --set cpu.graph \
@@ -456,16 +436,57 @@ sketchybar --add item memory right \
     update_freq=5 \
     script="ISLAND=status_island NCPU=$NCPU $PLUGIN_DIR/cpu.sh" \
     click_script="open -a 'Activity Monitor'" \
-  --subscribe cpu mouse.entered mouse.exited \
+  --subscribe cpu mouse.entered mouse.exited mouse.clicked \
   \
   --add bracket status_island cpu cpu.graph cpu_temp memory divider.status wifi volume battery \
-  --set status_island "${island[@]}"
+  --set status_island "${island[@]}" "${popup[@]}" popup.align=left
+
+# Battery and volume popups hang from the whole status island, as wide as it
+# (battery.sh / volume.sh show one set of rows and hide the other).
+# Battery popup (filled by battery.sh on click)
+sketchybar --add item battery.source popup.status_island \
+  --set battery.source "${popup_row[@]}" icon="$ICON_PLUG" icon.color=$TEAL \
+  --add item battery.time popup.status_island \
+  --set battery.time "${popup_row[@]}" icon="$ICON_HOURGLASS" icon.color=$YELLOW \
+  --add item battery.settings popup.status_island \
+  --set battery.settings "${popup_row[@]}" \
+    icon="$ICON_SETTINGS" icon.color=$COMMENT label="Battery settings…" \
+    script="$PLUGIN_DIR/popup_row.sh" \
+    click_script="sketchybar --set status_island popup.drawing=off; open 'x-apple.systempreferences:com.apple.Battery-Settings.extension'" \
+  --subscribe battery.settings mouse.entered mouse.exited
+
+# Volume popup: slider (click/drag) + settings
+sketchybar --add slider volume.slider popup.status_island 180 \
+  --set volume.slider \
+    padding_left=12 \
+    padding_right=12 \
+    icon.drawing=off \
+    label.drawing=off \
+    background.height=28 \
+    slider.background.height=6 \
+    slider.background.corner_radius=3 \
+    slider.background.color=$BG_HIGHLIGHT \
+    slider.highlight_color=$GREEN \
+    slider.knob="●" \
+    slider.knob.color=$FG \
+    script="$PLUGIN_DIR/volume_slider.sh" \
+  --subscribe volume.slider mouse.clicked \
+  --add item volume.settings popup.status_island \
+  --set volume.settings "${popup_row[@]}" \
+    icon="$ICON_SETTINGS" icon.color=$COMMENT label="Sound settings…" \
+    script="$PLUGIN_DIR/popup_row.sh" \
+    click_script="sketchybar --set status_island popup.drawing=off; open 'x-apple.systempreferences:com.apple.Sound-Settings.extension'" \
+  --subscribe volume.settings mouse.entered mouse.exited
+
 
 ##### Go #######################################################################
 # Reload on save, like Hyprland does with hyprland.conf.
 sketchybar --hotload on
 
 sketchybar --update
+
+# Slide the bar down into place (it was built off-screen at y_offset=-50).
+sketchybar --animate tanh 25 --bar y_offset=10
 
 # Done: forget our PID (unless a newer run already replaced it).
 [ "$(cat "$PIDFILE" 2>/dev/null)" = "$$" ] && rm -f "$PIDFILE"

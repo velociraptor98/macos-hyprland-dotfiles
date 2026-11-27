@@ -4,7 +4,9 @@
 
 source "$CONFIG_DIR/plugins/hover.sh"   # mouse enter/leave: highlight island, exit
 
+source "$CONFIG_DIR/plugins/popup.sh"
+
 case "$SENDER" in
-  mouse.clicked)          sketchybar --set "$NAME" popup.drawing=toggle ;;
+  mouse.clicked)          popup_toggle "$NAME" ;;
   mouse.exited.global)    sketchybar --set "$NAME" popup.drawing=off ;;
 esac
