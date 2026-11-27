@@ -18,14 +18,15 @@ bar) and **JankyBorders** (window borders), themed **Tokyo Night**.
 - Small one-off animations, nothing looping: the bar slides in on start/reload, the newly focused workspace pill
   hops, a changed window title fades in, the mode pill pops in and out
 - Workspaces show only occupied + on-screen ones, drawn on their own monitor's bar. The focused one is a wide
-  accent pill with app icons (the width change animates), the one on screen on the other monitor is outlined,
+  accent pill with app icons (the width change animates), the one on screen on the other monitor gets a soft fill,
   the rest are compact muted numbers
 - Focused window title (left of the notch on a MacBook screen), layout indicator, AeroSpace mode pill with key hints
 - Click popups (frosted): power menu (logo; grouped into Apps / Session / Reload), calendar with today ringed (date/time),
   battery details, volume slider (right click = mute). The battery and volume popups hang from the status island at
   its full width; the calendar lines up with the clock island
 - One status island: CPU with a live usage graph, temperature and memory │ Wi-Fi, volume and battery — plus a clock island
-- Coloured icons, quieter labels; warning colours on CPU, temperature, memory and battery as they climb. The status
+- Clean, borderless look: labels in the system font (SF Pro), monochrome icons that only take colour when it means
+  something (warnings on CPU, temperature, memory and battery as they climb; green when charging). The status
   island's edge turns red while something is critical (battery under 20% off the charger, CPU ≥ 85 °C, memory ≥ 85%)
 - Event-driven: one controller script redraws from a single AeroSpace snapshot, bursts are coalesced,
   identical redraws are skipped, no window titles are written to disk. The only polling is cheap
@@ -96,7 +97,7 @@ Then start AeroSpace (it reloads its config on save; SketchyBar hot-reloads too)
   on 2; Finder, small utilities and picture-in-picture video float. Edit the `[[on-window-detected]]` rules in `aerospace/aerospace.toml`
   (find an app's ID with `aerospace list-apps`).
 - **Colours:** `sketchybar/colors.sh` and `borders/bordersrc`. Island transparency is the alpha byte of `BG`
-  in `colors.sh` (`0xbf…` = 75%); edge, shadow and hover colours sit next to it.
+  in `colors.sh` (`0xd9…` = 85%); edge, shadow and hover colours sit next to it.
 - **App icons:** `sketchybar/plugins/icon_map.sh` (unknown apps get a generic icon).
 
 ## Key bindings (main)

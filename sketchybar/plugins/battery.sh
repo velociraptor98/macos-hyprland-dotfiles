@@ -23,10 +23,10 @@ if [ -z "$pct" ]; then
 fi
 
 case "$pct" in
-  9[0-9] | 100) icon=$ICON_BAT_100; color=$GREEN ;;
-  [6-8][0-9])   icon=$ICON_BAT_75;  color=$GREEN ;;
-  [3-5][0-9])   icon=$ICON_BAT_50;  color=$YELLOW ;;
-  [1-2][0-9])   icon=$ICON_BAT_25;  color=$ORANGE ;;
+  9[0-9] | 100) icon=$ICON_BAT_100; color=$ICON_DIM ;;
+  [6-8][0-9])   icon=$ICON_BAT_75;  color=$ICON_DIM ;;
+  [3-5][0-9])   icon=$ICON_BAT_50;  color=$ICON_DIM ;;
+  [1-2][0-9])   icon=$ICON_BAT_25;  color=$YELLOW ;;
   *)            icon=$ICON_BAT_0;   color=$RED ;;
 esac
 
@@ -34,7 +34,7 @@ on_ac=false
 if printf '%s' "$batt" | grep -q 'AC Power'; then
   on_ac=true
   icon=$ICON_BAT_CHARGING
-  color=$TEAL
+  color=$GREEN
 fi
 
 sketchybar --set "$NAME" drawing=on icon="$icon" icon.color=$color label="${pct}%"

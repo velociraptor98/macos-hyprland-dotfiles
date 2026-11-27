@@ -16,7 +16,7 @@ island=(
   background.shadow.drawing=on
   background.shadow.color=$SHADOW
   background.shadow.angle=90
-  background.shadow.distance=3
+  background.shadow.distance=4
 )
 
 # Popup panel (calendar, battery, volume, power menu, mode hints).

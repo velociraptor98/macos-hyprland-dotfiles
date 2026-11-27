@@ -14,10 +14,11 @@ EOF
 
 if [ "$usage" -ge 80 ]; then color=$RED
 elif [ "$usage" -ge 50 ]; then color=$YELLOW
-else color=$BLUE
+else color=$ICON_DIM
 fi
 
-fill="0x40${color#0xff}"   # same colour at 25% under the line
+graph=$color; [ "$color" = "$ICON_DIM" ] && graph=$ACCENT
+fill="0x33${graph#0xff}"   # same colour at 25% under the line
 sketchybar --set "$NAME" icon.color=$color label="${usage}%" \
-           --set cpu.graph graph.color=$color graph.fill_color=$fill \
+           --set cpu.graph graph.color=$graph graph.fill_color=$fill \
            --push cpu.graph "$frac"

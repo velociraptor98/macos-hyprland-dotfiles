@@ -20,7 +20,7 @@ esac
 
 if [ "$temp" -ge 85 ]; then color=$RED
 elif [ "$temp" -ge 70 ]; then color=$YELLOW
-else color=$TEAL
+else color=$ICON_DIM
 fi
 
 sketchybar --set "$NAME" drawing=on icon.color=$color label="${temp}°C"

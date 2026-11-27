@@ -89,7 +89,7 @@ render() {
       bg=$WS_ACTIVE_BG; fg=$WS_ACTIVE_FG; border=$WS_ACTIVE_BG; pad=16; expand=1
       f_display="$display"; f_mon="$mon"; f_layout="$root_layout"; f_ws="$ws"
     elif [ "$visible" = "true" ]; then
-      bg=$WS_INACTIVE_BG; fg=$WS_VISIBLE_FG; border=$WS_VISIBLE_BORDER; pad=12; expand=1
+      bg=$WS_VISIBLE_BG; fg=$WS_VISIBLE_FG; border=$WS_VISIBLE_BORDER; pad=12; expand=1
     else
       bg=$WS_INACTIVE_BG; fg=$WS_INACTIVE_FG; border=$WS_INACTIVE_BG; pad=7; expand=0
     fi

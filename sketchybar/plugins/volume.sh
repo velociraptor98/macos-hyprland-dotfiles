@@ -42,13 +42,13 @@ esac
 if [ "$muted" = "true" ] || [ "$vol" = "0" ]; then
   icon=$ICON_VOL_MUTE; color=$COMMENT
 elif [ "$vol" = "--" ]; then
-  icon=$ICON_VOL_HIGH; color=$GREEN
+  icon=$ICON_VOL_HIGH; color=$ICON_DIM
 elif [ "$vol" -ge 60 ]; then
-  icon=$ICON_VOL_HIGH; color=$GREEN
+  icon=$ICON_VOL_HIGH; color=$ICON_DIM
 elif [ "$vol" -ge 30 ]; then
-  icon=$ICON_VOL_MED; color=$GREEN
+  icon=$ICON_VOL_MED; color=$ICON_DIM
 else
-  icon=$ICON_VOL_LOW; color=$GREEN
+  icon=$ICON_VOL_LOW; color=$ICON_DIM
 fi
 
 label="${vol}%"
@@ -56,7 +56,7 @@ label="${vol}%"
 
 args=(--set "$NAME" icon="$icon" icon.color=$color label="$label")
 if [ "$vol" != "--" ]; then
-  slider_color=$GREEN
+  slider_color=$ACCENT
   [ "$muted" = "true" ] && slider_color=$COMMENT
   args+=(--set volume.slider slider.percentage="$vol" slider.highlight_color=$slider_color)
 fi

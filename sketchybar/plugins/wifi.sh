@@ -12,7 +12,7 @@ dev="${WIFI_DEV:-$(networksetup -listallhardwareports | awk '/Wi-Fi/ { getline; 
 ip="$(ipconfig getifaddr "${dev:-en0}" 2>/dev/null)"
 
 if [ -n "$ip" ]; then
-  sketchybar --set "$NAME" icon="$ICON_WIFI" icon.color=$CYAN
+  sketchybar --set "$NAME" icon="$ICON_WIFI" icon.color=$ICON_DIM
 else
   sketchybar --set "$NAME" icon="$ICON_WIFI_OFF" icon.color=$RED
 fi

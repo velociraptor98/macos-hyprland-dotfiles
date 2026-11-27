@@ -64,6 +64,10 @@ if [ -z "$FONT" ]; then
 fi
 case "$FONT" in JetBrains*) LABEL_STYLE="SemiBold" ;; *) LABEL_STYLE="Bold" ;; esac
 
+# Text in the system font (SF Pro, always present on macOS; CoreText resolves the
+# name even though it is hidden from the font list). Glyphs stay in the Nerd Font.
+TEXT_FONT="SF Pro"
+
 APP_FONT="sketchybar-app-font"
 APP_ICONS=off
 has_font "$APP_FONT" && APP_ICONS=on
@@ -86,9 +90,9 @@ default=(
   padding_left=0
   padding_right=0
   icon.font="$FONT:Bold:15.0"
-  label.font="$FONT:$LABEL_STYLE:13.0"
-  icon.color=$FG
-  label.color=$FG_DARK          # coloured icons lead, labels recede
+  label.font="$TEXT_FONT:Semibold:13.0"
+  icon.color=$ICON_DIM
+  label.color=$FG               # quiet icons, crisp text
   icon.padding_left=8
   icon.padding_right=5
   label.padding_left=0
@@ -111,7 +115,7 @@ divider() { # name position — thin vertical line between groups inside an isla
   sketchybar --add item "$1" "$2" \
     --set "$1" width=1 padding_left=0 padding_right=0 \
       icon.drawing=off label.drawing=off \
-      background.drawing=on background.color=$EDGE background.height=14 background.corner_radius=0
+      background.drawing=on background.color=$DIVIDER background.height=12 background.corner_radius=0
 }
 
 # Popup section heading: a divider line along the top of the row, small muted caps under it.
@@ -120,9 +124,9 @@ divider() { # name position — thin vertical line between groups inside an isla
 popup_heading() { # name parent label
   sketchybar --add item "$1" "popup.$2" \
     --set "$1" width=186 padding_left=12 padding_right=12 icon.drawing=off \
-      label="$3" label.font="$FONT:Bold:10.0" label.color=$COMMENT \
+      label="$3" label.font="$TEXT_FONT:Bold:10.0" label.color=$COMMENT \
       label.padding_left=0 label.y_offset=-3 \
-      background.drawing=on background.color=$EDGE background.height=1 \
+      background.drawing=on background.color=$DIVIDER background.height=1 \
       background.corner_radius=0 background.y_offset=9
 }
 
@@ -177,7 +181,7 @@ for ws in 1 2 3 4 5 6 7 8 9 10 S; do
     --set "workspace.$ws" \
       drawing=off \
       icon="$icon" \
-      icon.font="$FONT:Bold:14.0" \
+      icon.font="$TEXT_FONT:Bold:13.0" \
       icon.color=$WS_INACTIVE_FG \
       icon.padding_left=10 \
       icon.padding_right=10 \
@@ -188,7 +192,7 @@ for ws in 1 2 3 4 5 6 7 8 9 10 S; do
       padding_left=2 \
       padding_right=2 \
       background.color=$WS_INACTIVE_BG \
-      background.border_width=1 \
+      background.border_width=0 \
       background.border_color=$WS_INACTIVE_BG \
       background.height=24 \
       background.corner_radius=12 \
@@ -228,7 +232,7 @@ sketchybar --add item layout left \
   --set layout "${island[@]}" \
     drawing=off \
     padding_left=8 \
-    icon.color=$CYAN \
+    icon.color=$ICON_DIM \
     icon.padding_left=12 \
     icon.padding_right=12 \
     label.drawing=off \
@@ -246,6 +250,7 @@ sketchybar --add item mode left \
     background.corner_radius=16 \
     icon.padding_left=12 \
     label.padding_right=12 \
+    label.font="$TEXT_FONT:Bold:12.0" \
     script="$PLUGIN_DIR/mode.sh" \
   --subscribe mode aerospace_mode_change
 
@@ -307,25 +312,24 @@ sketchybar --add item title_poll left \
 ##### Right: clock (rightmost) #################################################
 sketchybar --add item clock right \
   --set clock \
-    icon="$ICON_CLOCK" \
-    icon.color=$BLUE \
-    icon.padding_left=12 \
+    icon.drawing=off \
+    label.font="$TEXT_FONT:Bold:13.0" \
     label.color=$FG \
-    label.padding_right=13 \
+    label.padding_left=6 \
+    label.padding_right=14 \
     update_freq=5 \
     script="ISLAND=clock_island $PLUGIN_DIR/clock.sh" \
   --subscribe clock mouse.clicked mouse.entered mouse.exited
-divider divider.clock right
 sketchybar --add item date right \
   --set date \
-    icon="$ICON_CALENDAR" \
-    icon.color=$MAGENTA \
-    icon.padding_left=13 \
-    label.padding_right=12 \
+    icon.drawing=off \
+    label.color=$FG_DARK \
+    label.padding_left=14 \
+    label.padding_right=0 \
     update_freq=60 \
     script="ISLAND=clock_island $PLUGIN_DIR/clock.sh" \
   --subscribe date mouse.clicked mouse.exited.global mouse.entered mouse.exited \
-  --add bracket clock_island date divider.clock clock \
+  --add bracket clock_island date clock \
   --set clock_island "${island[@]}" "${popup[@]}" popup.align=right   # calendar hangs from the island
 
 # Calendar popup rows (filled by plugins/calendar.sh on click): title, weekdays, 6 weeks.
@@ -341,6 +345,7 @@ for i in 0 1 2 3 4 5 6 7; do
       icon.color=$FG \
       icon.padding_left=12 \
       icon.padding_right=8 \
+      label.font="$FONT:$LABEL_STYLE:13.0" \
       label.padding_left=12 \
       label.background.color=0x407aa2f7 \
       label.background.border_color=$ACCENT \
@@ -351,7 +356,7 @@ for i in 0 1 2 3 4 5 6 7; do
       width=250 \
       background.height=22
 done
-sketchybar --set cal.0 label.font="$FONT:Bold:14.0" label.color=$ACCENT background.height=30 \
+sketchybar --set cal.0 label.font="$TEXT_FONT:Bold:14.0" label.color=$ACCENT background.height=30 \
   --add item cal.open popup.clock_island \
   --set cal.open "${popup_row[@]}" \
     icon="$ICON_CALENDAR" icon.color=$MAGENTA label="Open Calendar" \
@@ -426,7 +431,7 @@ sketchybar --add item memory right \
     background.color=$TRANSPARENT \
     background.height=14 \
     graph.line_width=1.5 \
-    graph.color=$BLUE \
+    graph.color=$ACCENT \
     click_script="open -a 'Activity Monitor'" \
   \
   --add item cpu right \
@@ -466,7 +471,7 @@ sketchybar --add slider volume.slider popup.status_island 180 \
     slider.background.height=6 \
     slider.background.corner_radius=3 \
     slider.background.color=$BG_HIGHLIGHT \
-    slider.highlight_color=$GREEN \
+    slider.highlight_color=$ACCENT \
     slider.knob="●" \
     slider.knob.color=$FG \
     script="$PLUGIN_DIR/volume_slider.sh" \

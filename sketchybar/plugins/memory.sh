@@ -13,7 +13,7 @@ used=$((100 - free))
 
 if [ "$used" -ge 85 ]; then color=$RED
 elif [ "$used" -ge 70 ]; then color=$YELLOW
-else color=$MAGENTA
+else color=$ICON_DIM
 fi
 
 sketchybar --set "$NAME" icon.color=$color label="${used}%"
