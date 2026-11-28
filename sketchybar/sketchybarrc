@@ -2,9 +2,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 #  SketchyBar as Waybar — Hyprland-style bar for AeroSpace, Tokyo Night
 #
-#  [  ] [ 1 2 3 S ] [▥] [RESIZE]    [ app · window title ]    [ cpu ⌇ temp mem │ wifi vol bat ] [ date time ]
+#  (   ● ━━ ● ●   ▥  RESIZE      app · window title      cpu ⌇ temp mem │ wifi vol bat    date time )
 #
-#  Floating "islands" on a transparent bar, 10px side margin = AeroSpace's 10px outer gaps, so bar and windows line up.
+#  One floating glass bar (split around the notch on a MacBook screen; plugins/bar_bg.sh),
+#  10px side margin = AeroSpace's 10px outer gaps, so bar and windows line up.
+#  Module groups ("islands") light up as a capsule on hover.
 #  Popups (click; close when the mouse leaves the bar): logo = power menu,
 #  date/time = calendar, battery = details, volume = slider (right click = mute).
 #  Mode pill shows key hints. ▥ = layout of the focused container.
@@ -15,7 +17,7 @@
 #    aerospace_mode_change       (on-mode-changed)
 #
 #  Fonts: a Nerd Font (JetBrainsMono preferred) for glyphs, and optionally
-#  sketchybar-app-font for per-app icons in workspaces / window title.
+#  sketchybar-app-font for the per-app icon in the window title.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Runtime state (window titles etc.) lives in the per-user temp dir; keep it private.
@@ -73,6 +75,9 @@ APP_ICONS=off
 has_font "$APP_FONT" && APP_ICONS=on
 
 ##### Bar ######################################################################
+# The bar window is transparent: its glass is drawn per display by plugins/bar_bg.sh
+# (sketchybar's bar colour is global, and a notched screen needs a break in the middle).
+# The window shadow follows what is drawn, so it hugs the glass strips.
 sketchybar --bar \
   position=top \
   height=32 \
@@ -81,7 +86,7 @@ sketchybar --bar \
   padding_left=0 \
   padding_right=0 \
   color=$TRANSPARENT \
-  shadow=off \
+  shadow=on \
   sticky=on \
   topmost=off
 
@@ -171,37 +176,33 @@ power_row wm     "$ICON_RELOAD" $TEAL    "AeroSpace"         "aerospace reload-c
 spacer gap.logo left 8
 
 ##### Left: workspaces (hyprland/workspaces) ###################################
-spacer ws_pad_l left 4
+# Dots: each is the background of a blank, fixed-width icon (8px, or 24px for the
+# focused pill). Not the item's own background: a fixed-width item ignores its
+# padding, and the padding is what spaces the dots. Width and colour are set by
+# plugins/aerospace.sh.
+spacer ws_pad_l left 6
 
 for ws in 1 2 3 4 5 6 7 8 9 10 S; do
-  icon="$ws"
-  [ "$ws" = "S" ] && icon="$ICON_SPECIAL"   # Hyprland's special:magic workspace
-
   sketchybar --add item "workspace.$ws" left \
     --set "workspace.$ws" \
       drawing=off \
-      icon="$icon" \
-      icon.font="$TEXT_FONT:Bold:13.0" \
-      icon.color=$WS_INACTIVE_FG \
-      icon.padding_left=10 \
-      icon.padding_right=10 \
-      label.font="$APP_FONT:Regular:14.0" \
-      label.color=$WS_INACTIVE_FG \
-      label.y_offset=-1 \
+      icon=" " \
+      icon.width=8 \
+      icon.padding_left=0 \
+      icon.padding_right=0 \
+      icon.background.color=$WS_INACTIVE_BG \
+      icon.background.height=8 \
+      icon.background.corner_radius=4 \
       label.drawing=off \
-      padding_left=2 \
-      padding_right=2 \
-      background.color=$WS_INACTIVE_BG \
-      background.border_width=0 \
-      background.border_color=$WS_INACTIVE_BG \
-      background.height=24 \
-      background.corner_radius=12 \
+      padding_left=5 \
+      padding_right=5 \
+      background.drawing=off \
       click_script="aerospace workspace $ws" \
       script="$PLUGIN_DIR/workspace_mouse.sh" \
     --subscribe "workspace.$ws" mouse.entered mouse.exited mouse.scrolled
 done
 
-spacer ws_pad_r left 4
+spacer ws_pad_r left 6
 
 workspaces_bracket
 
@@ -482,6 +483,14 @@ sketchybar --add slider volume.slider popup.status_island 180 \
     script="$PLUGIN_DIR/popup_row.sh" \
     click_script="sketchybar --set status_island popup.drawing=off; open 'x-apple.systempreferences:com.apple.Sound-Settings.extension'" \
   --subscribe volume.settings mouse.entered mouse.exited
+
+##### Bar glass (per display, split around a notch) #############################
+sketchybar --add item bar_bg left \
+  --set bar_bg \
+    drawing=off \
+    updates=on \
+    script="$PLUGIN_DIR/bar_bg.sh" \
+  --subscribe bar_bg display_change
 
 
 ##### Go #######################################################################

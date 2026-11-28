@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Status island warning edge. Sourced by battery.sh, cpu_temp.sh and memory.sh:
+# Status group warning ring. Sourced by battery.sh, cpu_temp.sh and memory.sh:
 #   island_alert <key> on|off
 # Each plugin raises/clears its own flag file; the island edge is red while any
 # flag is up. sketchybar is only called when the island's state actually flips.
@@ -20,6 +20,6 @@ island_alert() {
     sketchybar --animate tanh 15 --set status_island background.border_color=$ALERT_EDGE
   else
     rm -f "$ALERT_DIR/alert_state.on"
-    sketchybar --animate tanh 15 --set status_island background.border_color=$EDGE
+    sketchybar --animate tanh 15 --set status_island background.border_color=$TRANSPARENT
   fi
 }

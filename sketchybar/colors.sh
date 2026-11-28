@@ -25,23 +25,22 @@ export PURPLE=0xff9d7cd8
 
 export TRANSPARENT=0x00000000
 
-# Glass look: hairline light edge + soft shadow under each island
+# Glass look: hairline light edge + soft shadow (bar strips and popups)
 export EDGE=0x14c0caf5        # FG at 8%: barely-there rim
 export EDGE_HOVER=0x40c0caf5  # FG at 25%
 export SHADOW=0x66000000      # black at 40%
 export DIVIDER=0x1fc0caf5     # FG at 12%: separators inside an island
-export ALERT_EDGE=0xccf7768e  # RED at 80%: status island edge while something is critical
+export ALERT_EDGE=0xccf7768e  # RED at 80%: ring around the status group while something is critical
 
 # Semantic
 export ACCENT=$BLUE
-export WS_ACTIVE_BG=$BLUE
-export WS_ACTIVE_FG=$BG_SOLID
-export WS_INACTIVE_BG=$TRANSPARENT     # only the focused pill gets a fill
-export WS_INACTIVE_FG=$FG_DARK
-export WS_HOVER_BG=$BG_HIGHLIGHT
-export WS_VISIBLE_BG=$BG_HIGHLIGHT  # on screen on the other monitor, not focused
-export WS_VISIBLE_FG=$FG
-export WS_VISIBLE_BORDER=$BG_HIGHLIGHT
+# Workspace dots
+export WS_ACTIVE_BG=$BLUE         # focused: stretched into a pill
+export WS_VISIBLE_BG=$FG_DARK     # on screen on the other monitor
+export WS_INACTIVE_BG=$COMMENT    # occupied, not on screen
+export WS_HOVER_BG=$FG
+export WS_SPECIAL_BG=0x99bb9af7   # the S (scratchpad) workspace: MAGENTA at 60%
+export WS_SPECIAL_VISIBLE_BG=$MAGENTA
 
 # Status icons are monochrome; colour only means something (warning, charging, muted).
 export ICON_DIM=$FG_DARK

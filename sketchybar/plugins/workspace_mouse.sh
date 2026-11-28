@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Per-workspace-pill mouse handling: hover highlight + scroll to cycle the
+# Per-workspace-dot mouse handling: hover highlight + scroll to cycle the
 # workspaces on that pill's monitor (Hyprland's `workspace, e+1` on mouse wheel).
 
 source "$CONFIG_DIR/colors.sh"
@@ -9,7 +9,7 @@ ws="${NAME#workspace.}"
 case "$SENDER" in
   mouse.entered)
     [ "$ws" = "$(aerospace list-workspaces --focused)" ] && exit 0
-    sketchybar --animate tanh 10 --set "$NAME" background.color=$WS_HOVER_BG icon.color=$FG label.color=$FG
+    sketchybar --animate tanh 10 --set "$NAME" icon.background.color=$WS_HOVER_BG
     ;;
   mouse.exited)
     # Let the controller restore the right style (inactive vs. visible-on-other-monitor).

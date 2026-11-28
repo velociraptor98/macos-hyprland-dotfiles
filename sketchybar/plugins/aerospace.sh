@@ -9,14 +9,13 @@
 #     (An extra wait before the first redraw was measured: no saving, only latency.)
 #   * nothing is sent to sketchybar when the result is identical to the last redraw
 #
-# Pills: drawn on the bar of the display their workspace lives on; only occupied +
-# on-screen workspaces are shown. Focused = wide accent capsule with app icons
-# (the width change animates); on screen elsewhere = outlined, with app icons;
-# everything else = a compact muted number, no fill. App icons need
-# sketchybar-app-font (APP_ICONS=on); workspaces AeroSpace invents (e.g. "11")
-# get a pill cloned on the fly.
+# Dots: drawn on the bar of the display their workspace lives on; only occupied +
+# on-screen workspaces are shown. Focused = the dot stretches into an accent pill
+# (the width change animates); on screen elsewhere = a bright dot; everything else
+# = a muted dot. S (scratchpad) is tinted magenta. Workspaces AeroSpace invents
+# (e.g. "11") get a dot cloned on the fly.
 # Title: only on the focused monitor's bar; left of the notch on the MacBook screen.
-# Flourishes: the newly focused pill hops once; a changed title fades in.
+# Flourishes: the newly focused dot hops once; a changed title fades in.
 
 source "$CONFIG_DIR/style.sh"   # colors, island, workspaces_bracket
 source "$CONFIG_DIR/plugins/icon_map.sh"
@@ -25,6 +24,7 @@ set -f                          # app names / titles must never glob
 umask 077                       # runtime files are private to this user
 
 KNOWN=" 1 2 3 4 5 6 7 8 9 10 S "
+WS_DOT=8 WS_PILL=24              # dot / focused pill width (height 8, see sketchybarrc)
 RUNDIR="${SKETCHYBAR_RUNDIR:-$(getconf DARWIN_USER_TEMP_DIR)sketchybar}"
 mkdir -m 700 -p "$RUNDIR"
 LOCK="$RUNDIR/controller.lock"
@@ -51,17 +51,11 @@ render() {
   ws_state="${ws_state%$'\n'}"; win_state="${win_state%$'\n'}"
   [ -z "$ws_state" ] && return   # AeroSpace busy/not running: keep the current bar
 
-  # One pass: append each workspace's unique apps (tab-separated, in window order).
-  joined="$(printf '%s\n@@\n%s\n' "$win_state" "$ws_state" | awk -F'|' '
-    $0 == "@@" { part = 2; next }
-    part != 2  { if (NF >= 3 && !seen[$2 SUBSEP $3]++) apps[$2] = apps[$2] (apps[$2] == "" ? "" : "\t") $3; next }
-    NF >= 6    { print $1 "|" $2 "|" $3 "|" $4 "|" $5 "|" $6 "|" apps[$1] }')"
-
   local args=() shown=" " new_items=0
-  local ws display mon visible focused apps app icons bg fg border pad item expand
+  local ws display mon visible focused app bg width item
   local f_display="" f_mon="" f_layout="" f_ws="" root_layout
 
-  while IFS='|' read -r ws display mon visible focused root_layout apps; do
+  while IFS='|' read -r ws display mon visible focused root_layout; do
     [ -z "$ws" ] && continue
     shown="$shown$ws "
     item="workspace.$ws"
@@ -71,39 +65,25 @@ render() {
       *[!A-Za-z0-9_-]*) continue ;;   # odd name: no pill (it would end up in a click_script)
       *) if ! sketchybar --query "$item" >/dev/null 2>&1; then
            sketchybar --clone "$item" workspace.10 \
-                      --set "$item" icon="$ws" click_script="aerospace workspace '$ws'" \
+                      --set "$item" click_script="aerospace workspace '$ws'" \
                       --move "$item" before workspace.S
            new_items=1
          fi ;;
     esac
 
-    icons=""
-    if [ "$APP_ICONS" = "on" ] && [ -n "$apps" ]; then
-      local old_ifs="$IFS"; IFS=$'\t'
-      for app in $apps; do icon_map "$app"; icons="$icons$APP_ICON "; done
-      IFS="$old_ifs"
-      icons="${icons% }"
-    fi
-
+    width=$WS_DOT
     if [ "$focused" = "true" ]; then
-      bg=$WS_ACTIVE_BG; fg=$WS_ACTIVE_FG; border=$WS_ACTIVE_BG; pad=16; expand=1
+      bg=$WS_ACTIVE_BG; width=$WS_PILL
       f_display="$display"; f_mon="$mon"; f_layout="$root_layout"; f_ws="$ws"
     elif [ "$visible" = "true" ]; then
-      bg=$WS_VISIBLE_BG; fg=$WS_VISIBLE_FG; border=$WS_VISIBLE_BORDER; pad=12; expand=1
+      bg=$WS_VISIBLE_BG; [ "$ws" = S ] && bg=$WS_SPECIAL_VISIBLE_BG
     else
-      bg=$WS_INACTIVE_BG; fg=$WS_INACTIVE_FG; border=$WS_INACTIVE_BG; pad=7; expand=0
+      bg=$WS_INACTIVE_BG; [ "$ws" = S ] && bg=$WS_SPECIAL_BG
     fi
 
-    args+=(--set "$item" drawing=on display="$display"
-      background.color=$bg background.border_color=$border
-      icon.color=$fg label.color=$fg icon.padding_left=$pad)
-    if [ -n "$icons" ] && [ "$expand" = 1 ]; then
-      args+=(icon.padding_right=6 label="$icons" label.drawing=on label.padding_right=$pad)
-    else
-      args+=(icon.padding_right=$pad label.drawing=off)
-    fi
+    args+=(--set "$item" drawing=on display="$display" icon.width=$width icon.background.color=$bg)
   done <<EOF
-$joined
+$ws_state
 EOF
 
   [ "$new_items" = 1 ] && workspaces_bracket

@@ -8,26 +8,26 @@ bar) and **JankyBorders** (window borders), themed **Tokyo Night**.
 | Path | Goes to | What it is |
 |---|---|---|
 | `aerospace/aerospace.toml` | `~/.aerospace.toml` | Hyprland-style bindings (`alt` = SUPER), gaps, workspaces pinned to monitors, bar events |
-| `sketchybar/` | `~/.config/sketchybar/` | The bar: floating islands, per-monitor workspaces, window title, popups |
+| `sketchybar/` | `~/.config/sketchybar/` | The bar: one floating glass bar, per-monitor workspace dots, window title, popups |
 | `borders/bordersrc` | `~/.config/borders/bordersrc` | Blue → magenta active border, muted inactive |
 
 ## Bar features
 
-- Floating glass islands: translucent capsules with a hairline edge and a soft shadow; each lights up on hover
-  and flashes on click
-- Small one-off animations, nothing looping: the bar slides in on start/reload, the newly focused workspace pill
+- One floating glass bar with a hairline edge and a soft shadow; on a notched MacBook screen it splits into two
+  halves around the notch. Module groups light up as a capsule on hover and flash on click
+- Small one-off animations, nothing looping: the bar slides in on start/reload, the newly focused workspace dot
   hops, a changed window title fades in, the mode pill pops in and out
-- Workspaces show only occupied + on-screen ones, drawn on their own monitor's bar. The focused one is a wide
-  accent pill with app icons (the width change animates), the one on screen on the other monitor gets a soft fill,
-  the rest are compact muted numbers
+- Workspaces show only occupied + on-screen ones, drawn on their own monitor's bar. Each is a dot: the focused one
+  stretches into an accent pill (the width change animates), the one on screen on the other monitor is bright, the
+  rest are muted; the scratchpad workspace (S) is tinted magenta. Scroll over them to cycle workspaces
 - Focused window title (left of the notch on a MacBook screen), layout indicator, AeroSpace mode pill with key hints
 - Click popups (frosted): power menu (logo; grouped into Apps / Session / Reload), calendar with today ringed (date/time),
-  battery details, volume slider (right click = mute). The battery and volume popups hang from the status island at
-  its full width; the calendar lines up with the clock island
-- One status island: CPU with a live usage graph, temperature and memory │ Wi-Fi, volume and battery — plus a clock island
+  battery details, volume slider (right click = mute). The battery and volume popups hang from the status group at
+  its full width; the calendar lines up with the clock group
+- One status group: CPU with a live usage graph, temperature and memory │ Wi-Fi, volume and battery — plus date and time
 - Clean, borderless look: labels in the system font (SF Pro), monochrome icons that only take colour when it means
   something (warnings on CPU, temperature, memory and battery as they climb; green when charging). The status
-  island's edge turns red while something is critical (battery under 20% off the charger, CPU ≥ 85 °C, memory ≥ 85%)
+  group gets a red ring while something is critical (battery under 20% off the charger, CPU ≥ 85 °C, memory ≥ 85%)
 - Event-driven: one controller script redraws from a single AeroSpace snapshot, bursts are coalesced,
   identical redraws are skipped, no window titles are written to disk. The only polling is cheap
   (window title every 5s, CPU/temperature every 5s, the rest slower); nothing needs extra macOS permissions
@@ -40,7 +40,7 @@ bar) and **JankyBorders** (window borders), themed **Tokyo Night**.
 | [AeroSpace](https://github.com/nikitabobko/AeroSpace) | tiling window manager (the "Hyprland" part) | yes | 0.21.3-Beta |
 | [SketchyBar](https://github.com/FelixKratz/SketchyBar) | the status bar (the "Waybar" part) | yes | 2.24.1 |
 | [JetBrainsMono Nerd Font](https://www.nerdfonts.com) | bar icons (any Nerd Font v3 works) | yes | 3.x |
-| [sketchybar-app-font](https://github.com/kvndrsslr/sketchybar-app-font) | per-app icons in workspaces and the title | optional — without it, workspaces show numbers only | — |
+| [sketchybar-app-font](https://github.com/kvndrsslr/sketchybar-app-font) | per-app icon in the window title | optional — without it, the title shows the app name | — |
 | [JankyBorders](https://github.com/FelixKratz/JankyBorders) | Hyprland-style window borders | optional | 1.9.0 |
 | Xcode Command Line Tools (`xcode-select --install`) | CPU temperature: the bar compiles a tiny sensor reader on first run | optional — without it the temperature is hidden | Apple M5 |
 
@@ -96,7 +96,7 @@ Then start AeroSpace (it reloads its config on save; SketchyBar hot-reloads too)
 - **App → workspace:** browsers (Safari, Helium) open on 1; terminals and coding agents (Terminal, Rex, Claude, OpenCode)
   on 2; Finder, small utilities and picture-in-picture video float. Edit the `[[on-window-detected]]` rules in `aerospace/aerospace.toml`
   (find an app's ID with `aerospace list-apps`).
-- **Colours:** `sketchybar/colors.sh` and `borders/bordersrc`. Island transparency is the alpha byte of `BG`
+- **Colours:** `sketchybar/colors.sh` and `borders/bordersrc`. Bar transparency is the alpha byte of `BG`
   in `colors.sh` (`0xd9…` = 85%); edge, shadow and hover colours sit next to it.
 - **App icons:** `sketchybar/plugins/icon_map.sh` (unknown apps get a generic icon).
 

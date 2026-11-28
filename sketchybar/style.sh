@@ -4,19 +4,16 @@
 
 source "$CONFIG_DIR/colors.sh"
 
-# A floating module: translucent glass capsule with a hairline edge and a soft
-# shadow underneath (shadow.angle=90 = straight down).
+# A module group on the bar ("island"): an invisible capsule that lights up on hover
+# (plugins/hover.sh) and carries the red alert ring. The glass itself is the bar
+# (plugins/bar_bg.sh). The border stays 1px wide so the alert ring only needs a colour.
 island=(
   background.drawing=on
-  background.color=$BG
-  background.border_color=$EDGE
+  background.color=$TRANSPARENT
+  background.border_color=$TRANSPARENT
   background.border_width=1
   background.corner_radius=16
   background.height=32
-  background.shadow.drawing=on
-  background.shadow.color=$SHADOW
-  background.shadow.angle=90
-  background.shadow.distance=4
 )
 
 # Popup panel (calendar, battery, volume, power menu, mode hints).
@@ -44,7 +41,7 @@ popup_row=(
   background.height=28
 )
 
-# Rebuild the bracket that draws the island behind the workspace pills.
+# Rebuild the bracket that groups the workspace dots (hover capsule).
 # Bracket members are fixed at creation, so new workspace items need this.
 workspaces_bracket() {
   sketchybar --remove workspaces 2>/dev/null
